@@ -1,0 +1,5 @@
+# Retrieval schema validation and lazy-loaded extraction dependencies (project venv only).
+pdfplumber==0.11.10
+python-docx==1.2.0
+python-pptx==1.0.2
+jsonschema>=4.25,<5

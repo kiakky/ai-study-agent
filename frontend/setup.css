@@ -1,0 +1,16 @@
+.setup-actions { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0; }
+.setup-field { display:grid; gap:8px; margin:18px 0; color:var(--muted); }
+.setup-field input, .setup-field select, .setup-field textarea, .time-window input {
+  width:100%; min-height:48px; border:1px solid var(--line); border-radius:10px;
+  background:var(--bg); color:var(--text); font:inherit; padding:12px;
+}
+.setup-field textarea { resize:vertical; }
+#preferences-form fieldset { border:0; padding:0; margin:20px 0; }
+.setup-days { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
+.setup-days label { display:flex; align-items:center; gap:7px; min-height:44px; }
+.setup-days input { width:20px; height:20px; accent-color:var(--accent); }
+.time-window { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:15px 0; padding:15px 0; border-bottom:1px solid var(--line); }
+.time-window button { grid-column:1/-1; }
+.time-window label { min-width:0; display:grid; gap:6px; }
+.setup-dashboard { display:block; text-align:center; text-decoration:none; margin-top:20px; }
+#google-status { margin-top:12px; }

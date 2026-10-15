@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101218">
+  <title>AI Study Agent</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <script src="/static/app.js" type="module"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="AI Study Agent home"><img src="/static/icon.svg" alt="" width="38" height="38"><span>study<span class="brand-light">agent</span><small>ONE LESS THING.</small></span></a>
+      <span class="pill"><span class="status-dot"></span> DEMO</span>
+    </header>
+    <div id="preview-note" class="preview-note" hidden>LOCAL TEST · Synthetic student · Temporary results</div>
+    <div id="notice" role="alert" hidden></div>
+    <main id="content" tabindex="-1" aria-live="polite"><div class="empty"><span class="eyebrow">YOUR STUDY SPACE</span><h1>Getting things ready…</h1><p>Connecting securely to your Telegram profile.</p></div></main>
+    <footer class="site-info" aria-labelledby="about-study-agent">
+      <h2 id="about-study-agent">About AI Study Agent</h2>
+      <p>A student hackathon project for conversational study planning, demo practice quizzes and saved progress.</p>
+      <p>Optional Google Calendar access checks your availability and lets you approve exact study events before they are created, moved or cancelled.</p>
+      <p><a href="https://t.me/AIStudyAgentTPBot">Open AI Study Agent on Telegram</a></p>
+      <p>Connect Google Calendar through Telegram Mini App &rarr; Settings &rarr; Connections.</p>
+      <p><a href="/privacy">Privacy Policy</a></p>
+    </footer>
+    <nav aria-label="Main navigation" class="bottom-nav">
+      <button data-nav="dashboard" aria-current="page"><span aria-hidden="true">◫</span>Dashboard</button>
+      <button data-nav="quizzes"><span aria-hidden="true">▤</span>Quizzes</button>
+      <button data-nav="grades"><span aria-hidden="true">▥</span>Grades</button>
+    </nav>
+  </div>
+  <noscript>Enable JavaScript to use the Study Agent Mini App.</noscript>
+</body>
+</html>

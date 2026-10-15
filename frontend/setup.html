@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101218">
+  <title>Study Agent Setup</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/setup.css">
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <script src="/static/setup.js" type="module"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header"><a class="brand" href="/"><img src="/static/icon.svg" alt="" width="38" height="38"><span>study<span class="brand-light">agent</span></span></a><span class="pill">YOUR PROFILE</span></header>
+    <div id="preview-note" class="preview-note" hidden>LOCAL TEST · Synthetic student · Temporary profile</div>
+    <main>
+      <div class="intro"><span class="eyebrow">SET IT UP ONCE</span><h1>Make study fit your day.</h1><p>Connections are optional. Your dashboard and demo quizzes always remain available.</p></div>
+      <div id="setup-message" class="empty" role="status">Verifying your Telegram identity…</div>
+      <div id="setup-content" hidden>
+        <p id="setup-progress" class="footnote"></p>
+        <section class="review-card">
+          <h2>Google Calendar</h2><p id="google-status"></p>
+          <p class="footnote">Connect your own account in Google's official browser flow. Initial access reads only busy/free times; it cannot write events. Future event permissions and study-plan approvals are separate.</p>
+          <div class="setup-actions"><button type="button" id="connect-google" class="primary">Connect / reconnect Google</button><button type="button" id="refresh-profile" class="secondary">Refresh connection</button><button type="button" id="disconnect-google" class="secondary">Disconnect locally</button></div>
+          <button type="button" id="skip-google" class="text-button">Skip Google Calendar</button>
+          <p class="footnote">Google opens in your external browser. ngrok may show its first-visit notice; only continue if this is the configured Study Agent domain. If the link fails, return here and start a fresh connection. Never paste school passwords or tokens into chat.</p>
+        </section>
+        <section class="review-card"><h2>Brightspace</h2><p>Per-student school authorization is not available yet. The developer's session and learning materials are never shared.</p><button type="button" id="skip-brightspace" class="secondary">Continue without Brightspace</button></section>
+        <form id="preferences-form" class="review-card">
+          <h2>Study preferences</h2><p id="preference-state" class="footnote"></p>
+          <fieldset><legend>Preferred study days</legend><div id="study-days" class="setup-days"></div></fieldset>
+          <p id="timezone-label" class="footnote"></p>
+          <div id="study-windows"></div><button type="button" id="add-window" class="text-button">Add a preferred time window</button>
+          <label class="setup-field">Session length (minutes)<input id="session-minutes" type="number" min="5" max="180" required></label>
+          <label class="setup-field">Preferred practice format<select id="practice-format"><option value="mcq">MCQ</option><option value="short_answer">Short answer</option><option value="explanations">Explanations</option><option value="mixed">Mixed practice</option></select></label>
+          <label class="setup-field">Preferred number of questions<input id="question-count" type="number" min="1" max="100" required></label>
+          <label class="setup-field">Other preferences<textarea id="preference-notes" maxlength="2000" rows="4" placeholder="For example: short weekday sessions, no reminders on Sundays."></textarea></label>
+          <p class="footnote">Leave days/times blank if undecided. End times earlier than start times indicate an overnight window. Demo quizzes remain 10 MCQs; saved preferences guide future practice.</p>
+          <button type="submit" class="primary wide">Save preferences</button>
+        </form>
+        <section class="review-card"><h2>Study plan</h2><p id="studyplan-state"></p><a id="study-planning-link" class="secondary setup-dashboard" href="/study" hidden>Study Plan</a></section>
+        <a class="secondary setup-dashboard" href="/">Open Dashboard</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

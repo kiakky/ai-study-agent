@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101218">
+  <title>Privacy Policy | AI Study Agent</title>
+  <meta name="description" content="How AI Study Agent handles Telegram identity, Google Calendar permissions, study data and AI processing.">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="AI Study Agent home"><img src="/static/icon.svg" alt="" width="38" height="38"><span>study<span class="brand-light">agent</span><small>ONE LESS THING.</small></span></a>
+      <span class="pill">PRIVACY</span>
+    </header>
+    <main class="privacy-content">
+      <article>
+        <span class="eyebrow">PUBLIC INFORMATION</span>
+        <h1>Privacy Policy</h1>
+        <p>Last updated: <time datetime="2026-10-15">15 October 2026</time></p>
+        <p>AI Study Agent is a student hackathon prototype operated by its project developer on a Windows laptop. It provides a Telegram bot and Mini App for study conversations, Calendar planning, demo quizzes and saved progress. This policy describes the current implementation, including its limitations. You can read this page without connecting Telegram or Google.</p>
+
+        <section aria-labelledby="information">
+          <h2 id="information">Information the application handles</h2>
+          <ul>
+            <li>Telegram user identifiers and display-name information used to identify your account, deliver bot replies and separate your records from other users.</li>
+            <li>Messages and replies, study subjects and goals, timezone, saved study preferences and optional free-text preference notes.</li>
+            <li>Study proposals, approved actions, session details, Calendar event references and execution results needed to review and manage your study events.</li>
+            <li>Quiz answers, attempt history, scores and progress records. The current Mini App includes demonstration quizzes; this does not mean course-grounded AI quiz generation is available.</li>
+            <li>Google authorization tokens, granted permissions and connection status when you choose to connect Google Calendar.</li>
+          </ul>
+          <p>The Mini App can keep unfinished quiz answers and submission retry identifiers in your browser or Telegram WebView's local storage. OAuth uses a short-lived secure browser cookie to bind the Google callback to the browser that started authorization.</p>
+        </section>
+
+        <section aria-labelledby="calendar">
+          <h2 id="calendar">Google Calendar access and purpose</h2>
+          <p>Connecting Google is optional. Initial authorization requests <code>calendar.freebusy</code> to check busy/free intervals in your primary Calendar and suggest study times. Creating or managing study events additionally requests <code>calendar.events.owned</code>, which permits viewing, creating, changing and deleting events on calendars you own. These are Calendar permissions, not access to Gmail, Drive or your Google password.</p>
+          <p>The application uses your connected account's primary Calendar. It reads availability and verifies relevant agent-created events, including their titles, times, identifiers, ownership markers and versions. The implemented workflow restricts event creation, rescheduling and cancellation to exact actions reviewed and approved by you; connecting Google alone is not approval. Existing approvals can continue after additional Google consent only while the exact approval remains valid.</p>
+          <p>Google Calendar information is used for these user-facing study features, including AI-assisted proposals. The application does not implement advertising or the sale of Calendar data. Do not connect an account you are not authorized to use.</p>
+        </section>
+
+        <section aria-labelledby="ai">
+          <h2 id="ai">IBM watsonx Orchestrate and other providers</h2>
+          <p>Study conversations use IBM watsonx Orchestrate. The current agent is configured with GPT-OSS 120B through Groq. Your messages, a limited recent conversation transcript, initial Telegram display name, timezone, normalized study defaults and relevant scheduling information may be sent for response generation and action selection. Scheduling information can include available time slots and study-session or proposal titles, topics and times.</p>
+          <p>Structured tool payloads omit stored free-text preference notes, Telegram/account identifiers, Google event identifiers, OAuth URLs and encrypted credentials. This filtering does not remove personal information you type into a conversation or include in an event title. Do not send passwords, tokens or other secrets in chat.</p>
+          <p>The model proposes actions; Python validates them and handles identity, Google authorization and approvals. Google OAuth tokens are not included in AI prompts. The application does not configure or promise a provider retention period, exclusion from model training, or deletion of provider-held copies when you clear local history. IBM and its model infrastructure process requests under their applicable terms.</p>
+          <p>Telegram processes bot messages and Mini App launch information. Google processes authorization and Calendar API requests. ngrok provides the public HTTPS connection to the laptop. These services can process network or message metadata under their own policies. The homepage loads Telegram's Mini App script; this privacy page does not load scripts or make account API requests.</p>
+          <p>Provider information: <a href="https://www.ibm.com/privacy">IBM privacy</a>, <a href="https://groq.com/privacy-policy">Groq privacy</a>, <a href="https://telegram.org/privacy">Telegram privacy</a>, <a href="https://policies.google.com/privacy">Google privacy</a> and <a href="https://ngrok.com/privacy">ngrok privacy</a>.</p>
+        </section>
+
+        <section aria-labelledby="storage">
+          <h2 id="storage">Storage, security and data access</h2>
+          <p>Application records are stored in a local SQLite database on the operator's laptop. Google access and refresh tokens are encrypted using Windows DPAPI with additional information tied to the Telegram user identifier. This protection depends on the host Windows account; general study records and conversation text are not encrypted by that token mechanism, and this is not end-to-end encrypted storage.</p>
+          <p>Normal application access uses authenticated Telegram identities and per-user database queries. OAuth uses state, PKCE, browser binding, expiry and connection-generation checks. The model does not supply the authenticated identity. The project operator and administrators with access to the host or private backups may access stored data for operation, troubleshooting and recovery. No security control provides an absolute guarantee against unauthorized access.</p>
+          <p>Private local backups and operational logs may retain copies or metadata. They are not intended for public publication. Per-student Brightspace authorization is not currently available; do not submit school passwords or session cookies.</p>
+        </section>
+
+        <section aria-labelledby="retention">
+          <h2 id="retention">Retention</h2>
+          <p>Conversation context is bounded: currently up to 12 recent completed turns are retained for context, with a smaller character budget for prompts. Older message text is pruned, while message identifiers and status records can remain for duplicate protection. Study profiles, preferences, goals, plans, approvals and quiz results have no automatic account-wide deletion schedule.</p>
+          <p>There is no configured fixed expiry for all backups or logs. Copies may remain after an active record is cleared or a Google connection is disconnected. Removing local data does not remove messages retained by Telegram, prompts already processed by AI providers or events in Google Calendar.</p>
+        </section>
+
+        <section aria-labelledby="controls">
+          <h2 id="controls">Disconnection and deletion procedures</h2>
+          <ul>
+            <li><strong>Disconnect Google locally:</strong> in the Mini App, open Settings / Connections and choose <strong>Disconnect locally</strong>. This removes the active local token and invalidates pending local authorization flows. It does not revoke the app's grant at Google, delete Calendar events or erase earlier backups.</li>
+            <li><strong>Revoke Google's grant:</strong> open <a href="https://myaccount.google.com/connections">your Google Account's third-party connections</a> and remove AI Study Agent's access. Return to the Mini App to disconnect locally as well. Revocation does not delete events already created.</li>
+            <li><strong>Clear local conversational context:</strong> current conversation testers can send <code>/clearconversation</code> to the bot. This clears local conversation text and stored tool-result payloads, but retains duplicate-protection records. It does not delete preferences, grades, plans, Google connections, Telegram messages or provider-held copies.</li>
+            <li><strong>Remove device drafts:</strong> clear this site's storage in your browser or Telegram WebView settings. Unsubmitted quiz answers on that device will be lost.</li>
+            <li><strong>Remove Calendar events:</strong> delete them in Google Calendar, or request an agent-created event's cancellation and explicitly approve that exact action.</li>
+          </ul>
+          <p id="deletion-contact">For privacy inquiries or to request deletion of application records, email <a href="mailto:1638ngshikai@gmail.com">1638ngshikai@gmail.com</a> with the subject <strong>AI Study Agent privacy / data deletion</strong>. Identify the Telegram account you used and describe which records you want removed, or request deletion of all application records associated with that account. The operator may need to confirm that you control the account before acting. Do not send passwords, OAuth tokens, session cookies or other credentials.</p>
+          <p>There is no self-service account-deletion command or automated complete-erasure process. Requests require manual review of the related records and backups; immediate deletion of every copy is not guaranteed. State whether you also want guidance on Google disconnection or removal of Calendar events. Local record deletion does not automatically revoke Google's grant, remove existing Calendar events, delete Telegram messages or erase provider-held copies. A normal bot conversation is processed by AI and is not a dedicated developer-support inbox; use the email above for privacy and deletion requests.</p>
+        </section>
+
+        <section aria-labelledby="changes">
+          <h2 id="changes">Policy updates</h2>
+          <p>This policy may be updated as the prototype changes. The date above identifies this version. Review the current policy before connecting an account or sharing study information.</p>
+        </section>
+        <p><a href="/">Return to homepage</a> &middot; <a href="https://t.me/AIStudyAgentTPBot">Open AI Study Agent on Telegram</a></p>
+        <p>Connect Google Calendar through Telegram Mini App &rarr; Settings &rarr; Connections.</p>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

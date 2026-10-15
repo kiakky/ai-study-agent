@@ -1,0 +1,76 @@
+# Google OAuth credentials
+backend/credentials/
+token.json
+*.token.json
+
+# SQLite database
+database/
+*.db
+*.db-wal
+*.db-shm
+
+# Environment variables and Python
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+
+# Node.js
+node_modules/
+
+# Local synthetic tests and browser evidence
+tests/artifacts/
+tests/quiz-test-*/
+tests/preview-*/
+tests/browser-*/
+
+# Source-only recovery snapshots and non-secret machine-local launch settings
+.local-backups/
+.private-lms/
+config/deployment.json
+config/google_oauth.json
+
+# Authentication/session material must never be staged
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.db-journal
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*token*.json
+**/storage-state*.json
+**/storage_state*.json
+**/auth-state*.json
+**/auth_state*.json
+**/sessions/
+**/.auth/
+.ngrok*/
+ngrok.yml
+ngrok.yaml
+
+# Temporary, explicitly configured Calendar testers
+config/calendar_test.json
+
+# Private rollout/model configuration (never credentials)
+config/conversation.json
+
+# Publication hygiene: local worktrees, logs, MCP state and downloaded material.
+.worktrees/
+.publication/
+*.log
+*.zip
+*.tgz
+*.tar
+*.tar.gz
+downloads/
+.cache/
+.d2l-session/
+.brightspace-mcp/
+browser-profile/
+playwright-report/
+test-results/
