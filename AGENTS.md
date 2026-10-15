@@ -100,7 +100,7 @@ Prioritize:
 8. Recovery from changes with approval before consequential Calendar actions.
 9. End-to-end testing, time-saved evidence and final demo preparation.
 
-IBM watsonx.ai is implemented; its original Lite quota is exhausted. Keep the provider interface modular and never run live inference without operator authorization.
+IBM watsonx Orchestrate is the deployed reasoning provider; legacy watsonx.ai Runtime remains selectable and its original Lite quota is exhausted. Python retains identity, memory, tools and exact approvals. Keep the provider interface modular and never run live inference without operator authorization.
 
 Focus only on the current assigned milestone rather than attempting every feature simultaneously.
 
