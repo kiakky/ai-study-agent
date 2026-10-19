@@ -136,9 +136,9 @@ class SourceStore:
                 if temporary.exists():temporary.unlink()
         return str(target.relative_to(self.cache_root.resolve()))
 
-    def extracted(self,source_id,value,document):
+    def extracted(self,source_id,value,document,retain_original=True):
         row=self.source(source_id)
-        reference=self.cache_file(value)
+        reference=self.cache_file(value) if retain_original else None
         data=document.model_dump(mode='json');metadata=json.loads(row['metadata_json'])
         payload_revision=self.latest_payload(source_id)
         version=digest({'metadata':metadata,'content':document.original_sha256,'extraction':data,'original_file_reference':reference,'payload_revision':payload_revision['id'] if payload_revision else None})

@@ -1,4 +1,4 @@
-﻿"""Small provider-neutral reply and tool-validation contracts. No tool execution."""
+"""Small provider-neutral reply and tool-validation contracts. No tool execution."""
 from dataclasses import dataclass
 import json
 from typing import Any, Protocol

@@ -53,7 +53,6 @@ def probe(base_url):
         request = Request(base_url + path, headers={
             "User-Agent": "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36",
             "Accept": "text/html" if kind == "html" else "*/*",
-            "ngrok-skip-browser-warning": "true",
         })
         try:
             try:

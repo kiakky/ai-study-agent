@@ -2,7 +2,7 @@ import {initData} from '/static/navigation.js';
 const content = document.querySelector('#content');
 const notice = document.querySelector('#notice');
 const tg = window.Telegram?.WebApp;
-const state = {user: null, profile: null, proposals: [], sessions: [], quizzes: [], grades: [], more: false, page: 'dashboard', draft: null, quiz: null, index: 0, busy: false};
+const state = {practice: null, user: null, profile: null, proposals: [], sessions: [], quizzes: [], grades: [], more: false, page: 'dashboard', draft: null, quiz: null, index: 0, busy: false};
 
 function replaceContent(...children) {
   content.replaceChildren(...children.filter(child => child !== null && child !== undefined));
@@ -118,6 +118,20 @@ function gradeRow(grade) {
 function emptyResults() {
   return el('div', {class: 'empty'}, el('h3', {}, 'Your progress starts here'), el('p', {}, 'Complete a practice quiz to see your score and review each answer.'), actionButton('Explore quizzes', () => navigate('quizzes'), 'secondary'));
 }
+function generatedPracticeCard() {
+  if (!state.practice) return null;
+  const stats=state.practice.stats;
+  return el('article', {class:'hero'}, el('span',{class:'tag'},'YOUR GENERATED PRACTICE'),
+    el('h2',{},'Study from your own materials'),
+    el('p',{},`${state.practice.sets.length} available practice sets; ${stats.completed} completed attempts in recent history; average ${stats.average===null?'--':stats.average+'%'}.`),
+    el('a',{href:'/practice',class:'primary'},'Open generated practice'));
+}
+function generatedGradeRows() {
+  return (state.practice?.attempts||[]).filter(a=>a.status==='completed').map(a=>actionButton([
+    el('span',{class:'score-tile'},`${a.score}%`),
+    el('span',{class:'row-copy'},el('strong',{},state.practice.sets.find(s=>s.id===a.set_id)?.title||'Generated practice'),el('small',{},`Generated practice / ${dateLabel(a.completed_at)}`))
+  ],()=>location.assign('/practice?attempt='+encodeURIComponent(a.id)),'grade-row'));
+}
 function renderDashboard() {
   setPage('dashboard');
   const stats = state.user.stats;
@@ -128,30 +142,31 @@ function renderDashboard() {
       el('p', {}, state.proposals.length ? `${state.proposals.filter(p=>p.status==='approved').length} finalized plan(s), ${state.proposals.filter(p=>p.status==='draft').length} draft proposal(s). Exact Calendar approval happens in Telegram.` : 'No study plan has been proposed yet. Your AI Study Agent will prepare one when it has the necessary information.'),
       ...state.sessions.filter(s=>s.status==='scheduled'&&new Date(s.start)>new Date()).sort((a,b)=>new Date(a.start)-new Date(b.start)).slice(0,3).map(session=>el('p', {}, `${session.title} - ${new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:session.timezone}).format(new Date(session.start))} - ${session.timezone} (Calendar confirmed)`)),
       el('a', {href:'/study',class:'secondary'}, 'Review Study Plan'), el('a', {href:'/setup',class:'secondary'}, 'Setup / Preferences')),
+    generatedPracticeCard(),
     ...state.quizzes.map(quizCard),
     el('div', {class: 'stats'}, ...[
-      [stats.completed, 'Quizzes completed'], [stats.average_score === null ? '—' : `${stats.average_score}%`, 'Average score'], [stats.best_score === null ? '—' : `${stats.best_score}%`, 'Personal best'],
+      [stats.completed, 'Demo quizzes completed'], [stats.average_score === null ? '—' : `${stats.average_score}%`, 'Demo average score'], [stats.best_score === null ? '—' : `${stats.best_score}%`, 'Demo personal best'],
     ].map(([value, label]) => el('div', {class: 'stat'}, el('strong', {}, value), el('small', {}, label)))),
     el('div', {class: 'section-head'}, el('h2', {}, 'Recent activity'), actionButton('View all ↗', () => navigate('grades'), 'text-button')),
-    state.grades.length ? el('div', {class: 'list'}, ...state.grades.slice(0, 3).map(gradeRow)) : emptyResults(),
+    (state.grades.length || generatedGradeRows().length) ? el('div', {class: 'list'}, ...generatedGradeRows().slice(0,3), ...state.grades.slice(0,3).map(gradeRow)) : emptyResults(),
   );
 }
 function renderQuizzes() {
   setPage('quizzes');
-  replaceContent(intro('YOUR PRACTICE SPACE', 'Small steps. Stronger skills.', 'Choose a quiz and take it at your own pace. Every deliberate retake gets its own saved result.'), ...state.quizzes.map(quizCard));
+  replaceContent(intro('YOUR PRACTICE SPACE', 'Small steps. Stronger skills.', 'Choose a quiz and take it at your own pace. Every deliberate retake gets its own saved result.'), generatedPracticeCard(), ...state.quizzes.map(quizCard));
 }
 function renderGrades() {
   setPage('grades');
   replaceContent(intro('LOOK HOW FAR YOU’VE COME', 'Your results', 'Revisit your answers, learn from the explanations, and try again whenever you like.'),
-    state.grades.length ? el('div', {class: 'list'}, ...state.grades.map(gradeRow)) : emptyResults(),
+    (state.grades.length || generatedGradeRows().length) ? el('div', {class: 'list'}, ...generatedGradeRows(), ...state.grades.map(gradeRow)) : emptyResults(),
     state.more ? actionButton('Load earlier results', async () => {
       const rows = await api(`/api/grades?offset=${state.grades.length}`);
       state.grades.push(...rows); state.more = rows.length === 30; renderGrades();
     }, 'secondary wide history-more') : null);
 }
 async function refresh() {
-  const [user, quizzes, grades, profile, proposals, sessions] = await Promise.all([api('/api/me'), api('/api/quizzes'), api('/api/grades'), api('/api/profile'), api('/api/study/proposals'), api('/api/study/sessions')]);
-  state.profile = profile; state.proposals = proposals; state.sessions = sessions;
+  const [user, quizzes, grades, profile, proposals, sessions, generated] = await Promise.all([api('/api/me'), api('/api/quizzes'), api('/api/grades'), api('/api/profile'), api('/api/study/proposals'), api('/api/study/sessions'), api('/api/practice').catch(()=>null)]);
+  state.practice = generated; state.profile = profile; state.proposals = proposals; state.sessions = sessions;
   state.user = user; state.quizzes = quizzes; state.grades = grades; state.more = grades.length === 30;
 }
 async function navigate(page) {

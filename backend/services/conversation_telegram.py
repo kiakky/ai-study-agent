@@ -1,4 +1,4 @@
-﻿"""Private authenticated chat and safe Calendar proposals for configured testers."""
+"""Private authenticated chat and actor-bound tools for the configured audience."""
 import asyncio,logging
 from services.conversations import ConversationService,ConversationDispatcher,load_settings
 from services.llm_providers import create_provider
@@ -7,6 +7,20 @@ from services.calendar_testing import configured_testers
 from telegram.error import TelegramError, NetworkError, RetryAfter
 
 log=logging.getLogger(__name__)
+
+
+def conversation_access(user,settings=None):
+    """Read an existing /start profile; never provision users or authorize LMS access."""
+    if type(user) is not int or user<=0:return False
+    try:
+        settings=settings or load_settings()
+        if settings.audience=='calendar_testers':return user in configured_testers()
+        if settings.audience!='onboarded_users':return False
+        from contextlib import closing
+        from database import get_connection
+        with closing(get_connection()) as db:
+            return db.execute('SELECT 1 FROM users u JOIN user_onboarding o ON o.telegram_user_id=u.telegram_user_id WHERE u.telegram_user_id=?',(user,)).fetchone() is not None
+    except (LLMError,ValueError):return False
 
 
 def private_user(update):
@@ -20,7 +34,12 @@ def dispatcher(context,settings):
     if existing:return existing
     provider=create_provider(settings)
     from services.calendar_agent import CalendarAgent
-    service=ConversationDispatcher(ConversationService(provider,agent_factory=CalendarAgent))
+    if getattr(provider, 'native_calendar_tools', False):
+        from services.calendar_native import NativeCalendarAgent
+        agent_factory=NativeCalendarAgent
+    else:
+        agent_factory=CalendarAgent
+    service=ConversationDispatcher(ConversationService(provider,agent_factory=agent_factory))
     context.bot_data['conversation_dispatcher']=service
     return service
 
@@ -54,8 +73,10 @@ async def handle_text(update,context):
     if user is None:return
     try:
         settings=load_settings()
-        if not settings.enabled or user not in configured_testers():
-            await reply(update,'Conversational study assistance is being tested. Your quizzes, settings and Calendar commands remain available.');return
+        if not settings.enabled:
+            await reply(update,'Study conversation is currently unavailable. Your quizzes, settings and Calendar commands remain available.');return
+        if not conversation_access(user,settings):
+            await reply(update,'Send /start in this private chat to set up your study profile. Study chat must also be enabled for this installation.');return
         from services.calendar_text_decisions import explicit_decision
         if explicit_decision(update.message.text):
             await plan_text_decision(update,context,user)
@@ -72,11 +93,12 @@ async def handle_text(update,context):
         except LLMError as error:
             log.warning('Conversation request failed (%s).',error.code)
             messages={
+                'practice_delivery':'I could not confirm a saved Mini App quiz for that request. Please try again or provide your own notes/PDF. No quiz answers were sent. Your other saved quizzes are unchanged.',
                 'invalid_tool_call':'The model returned an invalid tool request. No action was approved; please try again.',
                 'invalid_intent_response':'I could not interpret that message reliably. No Calendar action occurred; please try again.',
                 'request_timeout':'This request took too long and was stopped. No new Calendar action was approved. Please send a new message; your saved context and Google connection are retained.',
-                'timeout':'Calendar planning took too long. No new Calendar action was approved. Please try a new message.',
-                'tool_loop':'I could not finish the plan reliably after checking the same information. No new Calendar action was approved. Please tell me the number of sessions and date range you want.',
+                'timeout':'This request reached its time limit and was stopped. Please try a narrower request. No new Calendar action was approved.',
+                'tool_loop':'I got stuck repeating a tool request and could not finish this turn. Please send the request again. On-demand quizzes do not require a study schedule. No Calendar changes were approved by this message.',
                 'tool_limit':'The model did not finish within the safe tool-call limit. No new Calendar action was approved. Please retry.',
                 'tool_retry_uncertain':'A previous tool result is uncertain. Check /studyplan or /calendarsessions before requesting another proposal; no Calendar write was approved by this message.',
                 'input_too_long':'Please keep each message within 3,000 characters.',
@@ -107,8 +129,8 @@ async def handle_text(update,context):
 async def clear_history(update,context):
     user=private_user(update)
     if user is None:return
-    if user not in configured_testers():
-        await reply(update,'Conversational testing is not enabled for this account.');return
+    if not conversation_access(user):
+        await reply(update,'Send /start to set up your study profile.');return
     # Clearing never consumes IBM credentials or makes an inference request.
     ConversationService(None).clear(user,update.message.message_id)
     await reply(update,'Your conversational history is cleared. Saved preferences, grades and Calendar plans are unchanged.')
@@ -126,7 +148,14 @@ async def present_tools(message,user,message_id):
     for row in rows:
         result=json.loads(row['result_json'])
         kind=result.get('review_kind')
-        if kind=='plan':await show_review(message,user,result['proposal_id'])
+        if result.get('practice_job_id'):
+            from deployment import load_deployment
+            from telegram import WebAppInfo
+            origin=load_deployment().mini_app_url
+            if origin:
+                await message.reply_text('Your practice request is saved. Open Generated Practice to check preparation and continue any unfinished quizzes.',
+                    reply_markup=Markup([[Button('Open Generated Practice',web_app=WebAppInfo(url=origin+'/practice'))]]))
+        elif kind=='plan':await show_review(message,user,result['proposal_id'])
         elif kind=='change':await show_change(message,user,result['change_id'])
         elif result.get('status') in {'disconnected','revoked','reconnect_required','unavailable'}:
             from deployment import load_deployment
@@ -154,7 +183,7 @@ async def preference_confirmation(update,context):
     query=update.callback_query
     if not query or not update.effective_user or not update.effective_chat:return
     user=update.effective_user.id
-    if update.effective_chat.type!='private' or update.effective_chat.id!=user or user not in configured_testers():return
+    if update.effective_chat.type!='private' or update.effective_chat.id!=user or not conversation_access(user):return
     await query.answer()
     _,decision,message_id,ordinal=query.data.split(':')
     with closing(get_connection()) as db,db:

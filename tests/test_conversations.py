@@ -3,7 +3,7 @@ import asyncio,json,sys,tempfile,time,threading
 from pathlib import Path
 from contextlib import closing
 from types import SimpleNamespace
-from unittest.mock import patch,AsyncMock
+from unittest.mock import patch,AsyncMock,Mock
 import unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'backend'))
@@ -208,6 +208,83 @@ class ConversationTelegramTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(tasks),1)
             await asyncio.gather(*tasks)
         self.assertEqual(len(self.provider.calls),1)
+
+
+class PublicConversationTests(unittest.IsolatedAsyncioTestCase):
+    setUp=ConversationTests.setUp
+    update=ConversationTelegramTests.update
+
+    def settings(self):
+        from services.conversations import ConversationSettings
+        return ConversationSettings(True,'onboarded_users')
+
+    async def test_start_profile_can_chat_without_connections_or_completed_preferences(self):
+        profiles.ensure_profile(303)
+        self.assertEqual(profiles.get_profile(303)['onboarding']['stage'],'google')
+        context=SimpleNamespace(bot_data={'conversation_dispatcher':ConversationDispatcher(self.service)})
+        with patch('services.conversation_telegram.load_settings',return_value=self.settings()),patch('services.conversation_telegram.configured_testers',return_value=set()):
+            await handle_text(self.update(303),context)
+            await handle_text(self.update(303,text='Make that easier',message_id=2),context)
+        self.assertEqual(len(self.provider.calls),2)
+        self.assertIn('Explain loops',json.dumps(self.provider.calls[-1]))
+        self.assertEqual(len(self.service.history(303)),2)
+        self.assertEqual(self.service.history(101),[])
+
+    async def test_unknown_user_has_no_inference_or_automatic_profile(self):
+        context=SimpleNamespace(bot_data={})
+        with patch('services.conversation_telegram.load_settings',return_value=self.settings()),patch('services.conversation_telegram.dispatcher',side_effect=AssertionError('No inference')):
+            update=self.update(404)
+            await handle_text(update,context)
+        self.assertIn('/start',update.message.reply_text.call_args.args[0])
+        with closing(database.get_connection()) as db:
+            self.assertIsNone(db.execute('SELECT 1 FROM users WHERE telegram_user_id=404').fetchone())
+
+    async def test_groups_and_mismatched_chat_never_dispatch(self):
+        profiles.ensure_profile(303)
+        group=self.update(303,kind='group');mismatch=self.update(303);mismatch.effective_chat.id=202
+        with patch('services.conversation_telegram.dispatcher',side_effect=AssertionError('No inference')):
+            await handle_text(group,SimpleNamespace(bot_data={}))
+            await handle_text(mismatch,SimpleNamespace(bot_data={}))
+        group.message.reply_text.assert_not_awaited();mismatch.message.reply_text.assert_not_awaited()
+
+    async def test_public_chat_clear_remains_owner_scoped(self):
+        self.service.respond(303,1,'My own notes');self.service.respond(202,1,'Other student notes')
+        with patch('services.conversation_telegram.load_settings',return_value=self.settings()):
+            await clear_history(self.update(303,message_id=2),None)
+        self.assertEqual(self.service.history(303),[])
+        self.assertEqual(len(self.service.history(202)),1)
+
+    async def test_public_session_controls_use_authenticated_actor(self):
+        from services.calendar_telegram import session_list,session_callback
+        profiles.ensure_profile(303)
+        message=SimpleNamespace(reply_text=AsyncMock())
+        manager=SimpleNamespace(list_sessions=Mock(return_value=[]))
+        with patch('services.conversation_telegram.load_settings',return_value=self.settings()),patch('services.calendar_telegram.CalendarSessionManagement',return_value=manager):
+            await session_list(message,303)
+            denied=self.update(404)
+            denied.callback_query=SimpleNamespace(data='cs:list',answer=AsyncMock(),message=denied.message)
+            await session_callback(denied,None)
+        manager.list_sessions.assert_called_once_with(303)
+        self.assertIn('/start',denied.message.reply_text.call_args.args[0])
+
+    async def test_disabled_switch_still_prevents_inference(self):
+        from services.conversations import ConversationSettings
+        profiles.ensure_profile(303)
+        with patch('services.conversation_telegram.load_settings',return_value=ConversationSettings(False,'onboarded_users')),patch('services.conversation_telegram.dispatcher',side_effect=AssertionError('No inference')):
+            update=self.update(303);await handle_text(update,SimpleNamespace(bot_data={}))
+        self.assertIn('unavailable',update.message.reply_text.call_args.args[0])
+
+    async def test_public_policy_config_is_explicit_and_validated(self):
+        from services.conversation_telegram import conversation_access
+        path=Path(self.folder.name)/'public.json'
+        path.write_text(json.dumps({'enabled':True,'audience':'onboarded_users'}))
+        settings=load_settings(path)
+        self.assertEqual(settings.audience,'onboarded_users')
+        profiles.ensure_profile(303)
+        self.assertTrue(conversation_access(303,settings))
+        for user in (404,0,-1,True,'303',None):self.assertFalse(conversation_access(user,settings))
+        with patch('services.conversation_telegram.load_settings',side_effect=LLMError('configuration')):
+            self.assertFalse(conversation_access(303))
 
 
 class ConversationMigrationTests(unittest.TestCase):

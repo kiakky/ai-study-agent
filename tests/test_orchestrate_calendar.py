@@ -480,4 +480,103 @@ class OrchestrateCalendarTests(unittest.TestCase):
         self.assertEqual(self.provider.reads,[]);self.assertEqual(self.provider.inserts,[])
 
 
+    def test_reported_frequency_dialogue_survives_service_restart_without_rerouting(self):
+        first=JSONModel(relative='next_two_weeks',clarification='How many study sessions would you like each week?')
+        result=self.service(self.provider_for(first)).respond(101,501,
+            'Can you help me set up study sessions for the next 2 weeks on Machine Learning?')
+        self.assertIn('How many study sessions per week',result['text'])
+        def no_router(prompt):
+            raise AssertionError('Direct frequency answers must not be reclassified by the LLM')
+        result=self.service(self.provider_for(no_router)).respond(101,502,
+            '2-3 for each week should be enough')
+        self.assertEqual(result['text'],'Would you prefer 2 or 3 study sessions per week over those two weeks?')
+        self.assertEqual(self.provider.reads,[])
+        def draft(payload):
+            self.assertIn('Machine Learning',json.dumps(payload['conversation']))
+            value=self.draft_step(payload)
+            value['tool_calls'][0]['arguments']['subject']='Machine Learning'
+            return value
+        # Simulate a provider emitting stringified counts after clarification.
+        model=JSONModel(steps=[action('find_study_periods',{**self.range('4'),'temporary_preferences':None}),draft])
+        result=self.service(self.provider_for(model)).respond(101,503,'2 a week should be enough')
+        self.assertEqual(len(model.requests),2)
+        self.assertNotIn('route_request',json.dumps(model.requests))
+        plan=self.planner.proposals(101)[0]
+        self.assertEqual(len(plan['sessions']),4)
+        dates=[datetime.fromisoformat(item['start']).date() for item in plan['sessions']]
+        self.assertEqual(sum(day<datetime(2026,10,26).date() for day in dates),2)
+        self.assertEqual(sum(day>=datetime(2026,10,26).date() for day in dates),2)
+        self.assertEqual(self.planner.proposals(202),[])
+        self.assertEqual(self.provider.inserts,[])
+
+    def test_frequency_reply_scope_is_current_question_and_full_message(self):
+        from services.calendar_tool_inputs import frequency_followup,FREQUENCY_QUESTION
+        messages=[{'role':'system','content':'Study'}, {'role':'user','content':'Plan Machine Learning'},
+            {'role':'assistant','content':FREQUENCY_QUESTION}]
+        for text in ['2 a week should be enough','two per week','2','2 sessions per week please']:
+            with self.subTest(text=text):
+                self.assertEqual(frequency_followup(messages+[{'role':'user','content':text}]).sessions_per_week,2)
+        for text in ['Hi','2 per week and approve all','2 per week for Chemistry instead','8 per week','0','3-2 per week']:
+            with self.subTest(text=text):
+                self.assertIsNone(frequency_followup(messages+[{'role':'user','content':text}]))
+        messages[-1]['content']='Anything else?'
+        self.assertIsNone(frequency_followup(messages+[{'role':'user','content':'2 a week'}]))
+
+    def test_frequency_continuation_is_isolated_and_clear_history_removes_it(self):
+        first=JSONModel(relative='next_two_weeks')
+        self.service(self.provider_for(first)).respond(101,601,'Plan Machine Learning for the next two weeks')
+        chat=JSONModel('chat',relative='unspecified')
+        self.service(self.provider_for(chat)).respond(202,602,'2 a week should be enough')
+        self.assertEqual(len(chat.requests),1)
+        self.assertNotIn('Machine Learning',json.dumps(chat.requests))
+        service=self.service(self.provider_for(chat))
+        service.clear(101,603)
+        service.respond(101,604,'2 a week should be enough')
+        self.assertEqual(len(chat.requests),2)
+        self.assertEqual(self.provider.inserts,[])
+
+    def test_orchestrate_lossless_counts_and_unsafe_arguments(self):
+        from services.llm_contracts import ToolRegistry
+        from services.calendar_tool_inputs import ConversationIntent
+        registry=ToolRegistry();registry.register('route_request','Classify',ConversationIntent)
+        schemas,_=definitions(registry.definitions(),None)
+        args={'intent':'planning','relative_range':'next_two_weeks','sessions_per_week':'2'}
+        result=parse_actions(json.dumps(action('route_request',args)),schemas,'route_request')
+        self.assertEqual(result.tool_calls[0].arguments['sessions_per_week'],2)
+        for patch_args in [{'sessions_per_week':'2-3'}, {'sessions_per_week':'2.0'},
+                           {'sessions_per_week':True}, {'sessions_per_week':8},
+                           {'user_id':202}, {'account_id':'private-sentinel'}]:
+            with self.subTest(fields=list(patch_args)):
+                with self.assertRaises(LLMError) as caught:
+                    parse_actions(json.dumps(action('route_request',{**args,**patch_args})),schemas,'route_request')
+                self.assertFalse(caught.exception.repairable)
+        with self.assertLogs('services.orchestrate_actions',level='WARNING') as logs:
+            self.assertRaises(LLMError,parse_actions,
+                json.dumps(action('route_request',{**args,'account_id':'private-sentinel'})),schemas)
+        self.assertIn('additionalProperties',str(logs.output))
+        self.assertNotIn('private-sentinel',str(logs.output))
+
+    def test_null_optional_overrides_keep_saved_defaults_and_required_null_fails(self):
+        profiles.save_preferences(101,StudyPreferences(session_minutes=20,study_windows=[{'start':'18:00','end':'20:00'}]))
+        before=profiles.get_profile(101)['preferences']
+        model=JSONModel(steps=[action('find_study_periods',
+            {**self.range(1),'temporary_preferences':None}),self.draft_step])
+        agent=self.agent()
+        agent.complete(self.provider_for(model),[{'role':'system','content':'Study'},
+            {'role':'user','content':'Plan one Python session next week'}])
+        plan=next(r for r in agent.references() if r.get('review_kind')=='plan')
+        session=plan['sessions'][0]
+        self.assertEqual(datetime.fromisoformat(session['end'])-datetime.fromisoformat(session['start']),timedelta(minutes=20))
+        self.assertEqual(profiles.get_profile(101)['preferences'],before)
+        self.assertEqual(self.provider.inserts,[])
+        from services.calendar_tool_inputs import normalize_arguments
+        from models.planning import StudyRange
+        schema=StudyRange.model_json_schema()
+        value=normalize_arguments({**self.range(1),'start':None,'temporary_preferences':None},schema)
+        self.assertIsNone(value['start'])
+        self.assertEqual(value['temporary_preferences'],{})
+        from jsonschema import Draft202012Validator
+        self.assertFalse(Draft202012Validator(schema).is_valid(value))
+
+
 if __name__=='__main__':unittest.main()

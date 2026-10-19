@@ -533,6 +533,9 @@ async def dashboard_menu_loop(app):
 
 
 async def post_init(app):
+    from services.practice import enabled,worker
+    if enabled():
+        app.bot_data['practice_worker'] = asyncio.create_task(worker())
     app.bot_data["calendar_consent_task"] = asyncio.create_task(consent_loop(app))
     app.bot_data["maintenance_task"] = (
         asyncio.create_task(maintenance_loop())
@@ -545,7 +548,7 @@ async def post_shutdown(app):
     conversation=app.bot_data.get('conversation_dispatcher')
     if conversation:
         conversation.service.provider.close()
-    for name in ("maintenance_task", "dashboard_menu_task", "calendar_consent_task"):
+    for name in ("maintenance_task", "dashboard_menu_task", "calendar_consent_task", "practice_worker"):
         task = app.bot_data.get(name)
         if task:
             task.cancel()
@@ -629,6 +632,8 @@ def main():
         )
     )
 
+    from services.practice_telegram import handle_pdf
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_pdf))
     app.add_error_handler(error_handler)
     app.add_handler(CallbackQueryHandler(onboarding_callback, pattern=r'^onboard:(skip:(google|brightspace)|defaults)$'))
     app.add_handler(CallbackQueryHandler(preference_notes_callback, pattern=r'^preferences:notes$'))

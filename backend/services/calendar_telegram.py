@@ -1,4 +1,4 @@
-﻿"""Telegram presentation for per-user Calendar tools; no chat-text approval parsing."""
+"""Telegram presentation for per-user Calendar tools; no chat-text approval parsing."""
 import asyncio
 from datetime import datetime, timedelta
 import json
@@ -8,7 +8,7 @@ from telegram import InlineKeyboardButton as Button, InlineKeyboardMarkup as Mar
 from telegram.error import TelegramError
 from services.calendar_conversation import CalendarConversation, session_text
 from services.calendar_management import CalendarSessionManagement
-from services.calendar_testing import CalendarTestService, configured_testers
+from services.calendar_testing import CalendarTestService
 from services.google_oauth import OAuthUnavailable, ReconnectRequired
 from services.planning import PlanningError
 from services.scheduling_core import find_periods
@@ -148,8 +148,13 @@ async def consent_loop(app):
         await asyncio.sleep(10)
 
 
+def session_access(user):
+    from services.conversation_telegram import conversation_access
+    if not conversation_access(user):raise PlanningError('Send /start in your private chat to set up your study profile. Session controls must be enabled for this installation.')
+
+
 async def session_list(message,user):
-    if user not in configured_testers():raise PlanningError('Temporary session controls are restricted to configured testers.')
+    session_access(user)
     sessions=CalendarSessionManagement().list_sessions(user)
     if not sessions:await message.reply_text('No confirmed study sessions yet.');return
     for session in sessions[:100]:
@@ -173,7 +178,7 @@ async def session_callback(update,context):
     query=update.callback_query;await query.answer()
     service=CalendarSessionManagement()
     try:
-        if user not in configured_testers():raise PlanningError('Temporary controls are not enabled for this account.')
+        session_access(user)
         if query.data=='cs:list':await session_list(query.message,user);return
         prefix,operation,*parts=query.data.split(':')
         if prefix=='cm':

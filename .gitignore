@@ -58,19 +58,7 @@ config/calendar_test.json
 
 # Private rollout/model configuration (never credentials)
 config/conversation.json
+config/brightspace_runtime.json
 
-# Publication hygiene: local worktrees, logs, MCP state and downloaded material.
-.worktrees/
-.publication/
-*.log
-*.zip
-*.tgz
-*.tar
-*.tar.gz
-downloads/
-.cache/
-.d2l-session/
-.brightspace-mcp/
-browser-profile/
-playwright-report/
-test-results/
+# Explicit local generated-practice rollout setting
+config/practice.json

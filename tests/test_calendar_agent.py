@@ -137,7 +137,8 @@ class AgentTests(unittest.TestCase):
         asyncio.run(present_tools(message,101,10))
         def update(user):return SimpleNamespace(effective_user=SimpleNamespace(id=user),effective_chat=SimpleNamespace(id=user,type='private'),
             callback_query=SimpleNamespace(data='ap:approve:10:0',answer=AsyncMock(),message=message))
-        with patch('services.conversation_telegram.configured_testers',return_value={101,202}):
+        from services.conversations import ConversationSettings
+        with patch('services.conversation_telegram.load_settings',return_value=ConversationSettings(True,'onboarded_users')),patch('services.conversation_telegram.configured_testers',return_value=set()):
             asyncio.run(preference_confirmation(update(202),None))
             self.assertEqual(profiles.get_profile(101)['preferences'],before)
             asyncio.run(preference_confirmation(update(101),None))

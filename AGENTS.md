@@ -1,4 +1,4 @@
-# AI Study Agent â€” Codex Development Instructions
+# AI Study Agent — Codex Development Instructions
 
 ## 1. Role and Project Context
 
@@ -71,14 +71,14 @@ These instructions are operational safeguards, not a substitute for sandbox rest
 
 The current project includes:
 
-- "backend/bot.py" â€” Telegram bot commands, callbacks and approval interface.
-- "backend/api.py" â€” FastAPI quiz endpoints and Telegram Mini App authentication.
-- "backend/database.py" â€” SQLite database schema and initialization.
-- "backend/services/brightspace.py" â€” Brightspace MCP integration.
-- "backend/services/google_calendar.py" â€” Google Calendar API integration.
-- "backend/services/scheduling.py" â€” Scheduling, conflict checks, approvals and recovery.
-- "frontend/" â€” Reserved for the Telegram Mini App.
-- "database/" â€” Persistent application data.
+- "backend/bot.py" — Telegram bot commands, callbacks and approval interface.
+- "backend/api.py" — FastAPI quiz endpoints and Telegram Mini App authentication.
+- "backend/database.py" — SQLite database schema and initialization.
+- "backend/services/brightspace.py" — Brightspace MCP integration.
+- "backend/services/google_calendar.py" — Google Calendar API integration.
+- "backend/services/scheduling.py" — Scheduling, conflict checks, approvals and recovery.
+- "frontend/" — Reserved for the Telegram Mini App.
+- "database/" — Persistent application data.
 
 Existing integrations have undergone manual testing, but some reliability cases remain unverified.
 
@@ -100,7 +100,7 @@ Prioritize:
 8. Recovery from changes with approval before consequential Calendar actions.
 9. End-to-end testing, time-saved evidence and final demo preparation.
 
-IBM watsonx Orchestrate is the deployed reasoning provider; legacy watsonx.ai Runtime remains selectable and its original Lite quota is exhausted. Python retains identity, memory, tools and exact approvals. Keep the provider interface modular and never run live inference without operator authorization.
+The LLM API provider is not yet confirmed. Avoid tightly coupling the application to a single provider.
 
 Focus only on the current assigned milestone rather than attempting every feature simultaneously.
 
@@ -155,12 +155,3 @@ However, ask before destructive operations, consequential external actions, secu
 The full project handover will be provided separately.
 
 The existing source code remains the authoritative reference for implemented functionality.
-
-## 11. Permanent publication safeguards
-
-Brightspace is permanently read-only: no creation, editing, deletion, submissions,
-acknowledgments or mark-read operations, including through legacy MCP helpers. Preserve
-the positive allowlist and read-only metadata checks; never give a model an unrestricted
-MCP session. Each operator must use their own institution-approved authentication.
-This clone contains no prior private data. Use your own credentials and a new database;
-never copy another developer's OS keychain/browser state. Read README/HANDOVER first.

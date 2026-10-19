@@ -1,4 +1,0 @@
--r requirements.txt
--r requirements-retrieval.txt
-# Optional browser regression utilities require: python -m playwright install chromium
-playwright==1.63.0

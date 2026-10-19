@@ -118,6 +118,8 @@ def action_prompt(messages, tools, choice):
 
 def parse_actions(text, schemas, forced=None, required=False):
     repairable=True
+    rejected_name='unknown'
+    rejected_rule='envelope'
     try:
         raw = strict_json(text)
         # Even a malformed envelope cannot repair an unsafe operation/argument.
@@ -126,7 +128,15 @@ def parse_actions(text, schemas, forced=None, required=False):
                 if isinstance(candidate,dict) and 'name' in candidate:
                     repairable=False
                     if candidate['name'] not in schemas:raise ValueError()
-                    if 'arguments' in candidate and not Draft202012Validator(schemas[candidate['name']]).is_valid(candidate['arguments']):raise ValueError()
+                    rejected_name=candidate['name']
+                    if 'arguments' in candidate:
+                        from services.calendar_tool_inputs import normalize_arguments
+                        candidate['arguments']=normalize_arguments(candidate['arguments'],schemas[rejected_name])
+                        errors=list(Draft202012Validator(schemas[rejected_name]).iter_errors(candidate['arguments']))
+                        if errors:
+                            # Schema keyword only: never log values, model text or identities.
+                            rejected_rule=errors[0].validator
+                            raise ValueError()
             repairable=True
         value = ActionReply.model_validate(raw)
         calls = []
@@ -148,6 +158,8 @@ def parse_actions(text, schemas, forced=None, required=False):
         if not calls and not value.content.strip(): raise ValueError()
         return ChatReply(value.content, tuple(calls))
     except Exception:
-        log.warning('Structured action rejected (%s).','unsafe_action_or_arguments' if not repairable else 'envelope_or_required_choice')
+        log.warning('Structured action rejected (%s; action=%s; rule=%s).',
+            'unsafe_action_or_arguments' if not repairable else 'envelope_or_required_choice',
+            rejected_name,rejected_rule)
         error=LLMError('invalid_tool_call');error.repairable=repairable
         raise error from None

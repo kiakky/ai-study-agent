@@ -457,9 +457,13 @@ CREATE TABLE IF NOT EXISTS lms_source_revisions (
 SCHEMA += LMS_SCHEMA
 
 
-def initialize_database(*, backfill_approvals=True, include_lms=False):
+def initialize_database(*, backfill_approvals=True, include_lms=False, include_practice=False):
     with closing(get_connection()) as connection, connection:
         connection.executescript(SCHEMA if include_lms else SCHEMA.replace(LMS_SCHEMA, ""))
+
+        if include_practice:
+            from services.practice_store import SCHEMA as PRACTICE_SCHEMA
+            connection.executescript(PRACTICE_SCHEMA)
 
         # Add new columns without deleting existing data.
         columns = {

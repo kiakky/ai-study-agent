@@ -18,7 +18,7 @@ from models.preferences import StudyPreferences
 from models.planning import StudyRange
 import database
 
-MESSAGE = "Can you address me as Alex from now on? Also I want to study more on game development, so could you help me schedule a few study sessions next week? I might be busy next Tuesday, so try to target Thursday and the weekends' afternoons."
+MESSAGE = "Can you address me as kiakky from now on? Also I want to study more on game development, so could you help me schedule a few study sessions next week? I might be busy next Tuesday, so try to target Thursday and the weekends' afternoons."
 
 
 class IntentPreferenceTests(unittest.TestCase):
@@ -61,7 +61,7 @@ class IntentPreferenceTests(unittest.TestCase):
         self.assertEqual(len(provider.requests),3)
         self.assertNotIn('find_study_periods',reply.content)
         self.assertNotIn('I will call',reply.content)
-        self.assertIn('Alex',provider.requests[1][-1]['content'])
+        self.assertIn('kiakky',provider.requests[1][-1]['content'])
         self.assertIn('Current actor-bound saved defaults',provider.requests[1][0]['content'])
         starts=[datetime.fromisoformat(s['start']).astimezone(ZoneInfo('Asia/Singapore')) for s in plan['sessions']]
         self.assertEqual([s.weekday() for s in starts],[3,5,6])

@@ -1,379 +1,765 @@
-# Developer handover — AI Study Agent (15 October 2026)
+# AI Study Agent - teammate handover
 
-**AI IGNITION 2026 · Problem Statement 2: One Less Thing · Deadline: 23 October 2026**
+Updated **20 October 2026**. Deadline **23 October 2026**. Read this before editing.
+The developer stopped further speculative owner-quiz debugging to conserve remaining
+weekly coding-agent usage. The next owner is a teammate; do not restart the broad
+investigation or silently promise a complete workflow.
 
-This document tells the four continuing developers **what exists, what has been verified, what remains, how to test it and how to operate the public application without the original developer's laptop**. Read [README.md](README.md) for installation, credentials, starting independent copies, links and configuration. This is a sanitized **source-only handover**, not a copy of the original Windows account, databases, user records, credentials or live deployment. Python remains the application/tool owner and IBM watsonx Orchestrate remains its reasoning provider. Do not rebuild the entire application inside IBM.
+## Immediate state and next assignments
 
-## Action plan for the four teammates — begin here
+Application source deployed on the original Windows laptop: **`f76c2d6`**.
+This handover is a documentation/source publication; it does not redeploy anything.
+All preserved worktrees and the live database remain in place. Pre-existing README
+and HANDOVER versions were backed up locally under ignored `.local-backups/` before
+this rewrite. They contained obsolete architecture/scope statements; this document
+supersedes those statements. Historical docs remain useful only with their dates/base.
 
-**Handover date:** 15 October 2026. **Submission deadline:** 23 October 2026.
-There is very little integration and presentation time. Read this section before taking
-on an enhancement, and coordinate changes through reviewed GitHub feature branches.
-This is an assignment **proposal**, not a claim that owners have accepted the tasks.
+1. **Assign one teammate to the background generation blocker below.** First add
+   narrow, safe stage/error-category diagnostics to `practice.run_one`; capture one
+   supervised owner reproduction. Diagnose the actual failure before changing policy.
+2. **Assign demo acceptance/recording.** Prove the known PDF flow first. Separately
+   test owner retrieval, Calendar plan/approval, scheduled delivery and adaptation.
+3. Clean duplicate Telegram messages and obvious Mini App mobile layout issues only
+   after the blocker is resolved or explicitly accepted as a demo limitation.
+4. Complete README status, slides/video, measured time-saving evidence and submission.
+   Assign the live-host operator and backup; GitHub does not keep the bot running.
 
-### Within the first hour
+These are assignments to agree as a team, not claims that anyone has accepted them.
+Do not describe the remaining work as a measured "10%": key demo behaviors remain unverified.
 
-1. Each teammate accepts the repository invitation, clones `main`, reads README's
-   30-minute quick start, runs the safe offline setup/tests and reports any setup blocker.
-2. Agree one named owner per lane below, the test environment for each lane, and interfaces
-   before changing shared Python modules. Put the names and status in your team tracker.
-3. Check the deployment reality: the live laptop uses source `5c28756`; the published
-   repository additionally includes small navigation changes **not deployed**. A cloned
-   repository has no live credentials or user records. Coordinate deployment with the
-   original operator; do not assume a `git push` updates the live bot.
-4. Start presentation/deck/video planning **in parallel**, not after engineering. Confirm
-   submission format, repository sharing rules, judging dates and IBM usage requirements
-   directly with the organizers. This document cannot certify requirements not checked.
+## End goal: the complete student journey
 
-### Live-host ownership and migration — read before the original laptop goes offline
+This section is the product requirement, not a list of completed features.
 
-**A repository clone is source code, not a running deployment.** Choose one named
-**judge-demo operator** to keep the public app available throughout the stated judging
-window. This can be a teammate's laptop, but it must stay powered on, awake, networked,
-and run **one FastAPI process, one ngrok tunnel, and one Telegram polling bot process**.
-Google Cloud OAuth *In production* does not host these processes. The original operator
-can stop their laptop only after the replacement is confirmed online; otherwise the
-published homepage, Mini App, chat responses and OAuth callback may stop working.
+| Stage | Expected student-visible behavior | Evidence / boundary needed |
+|---|---|---|
+| Access | Any student can `/start`, onboard, converse, set preferences and open the Mini App | Signed Telegram identity and user-owned records; no owner privileges granted by onboarding |
+| Discover | Owner asks for exam help; LLM inspects course catalog, teaching plans, assessment information and notes | Actual read-only Brightspace evidence; other students use their own uploads |
+| Prioritize | Identify real tests/exams and prioritize nearer ones | Cite actual scope/date evidence; never classify an assignment due date as an exam |
+| Plan | Propose study sessions leading up to assessments, respecting preferences and Calendar availability | Generic plan if no exam date is evidenced; no invented dates |
+| Revise/approve | Student changes a proposed session and reviews exact Calendar changes | Frozen proposal, actor ownership and explicit approval before writes |
+| Study support | At session time, student receives a proactive notification and can ask for explanations | Actual relevant learning notes, not merely teaching-plan topic lists |
+| Scheduled quiz | Session provides a generated Mini App quiz linked to the study content | Session trigger, available owned learning evidence, completed generation and private set |
+| Spontaneous quiz | "Generate a short practice quiz for GRSP W3 now" works independently | No plan, Calendar, date range or session count required; LLM chooses evidence/tools |
+| Attempt/review | Untimed quiz saves progress independently, resumes, submits and shows score/explanations | No answer key before submission; server-side independent attempts and actor isolation |
+| Adapt | Periodic check notices a new Calendar conflict and suggests available alternatives | Deduplicated notification, current availability and fresh approval before moving events |
 
-**Two supported paths — agree which one applies:**
+For the adaptation demo the developer can manually introduce an overlapping event.
+Normal monitoring may run every 5-10 minutes; demo polling every 30-120 seconds.
+Announcement monitoring was dropped. Do not substitute announcement monitoring for
+Calendar-conflict adaptation. Do not require one complex prompt to perform every
+stage: standalone requests are enough for the hackathon.
 
-| Path | Telegram bot identity | Web address, Google and data | Use case |
-|---|---|---|---|
-| **Independent developer clone** | Create a separate bot with **your own** `TELEGRAM_BOT_TOKEN` and owner ID in private `.env`; never reuse the live token. | Create a new private SQLite DB, your own ngrok account/domain, IBM environment and Google OAuth client/project. A new Google Cloud project does not inherit the existing project's Production status. | Parallel coding, own-account integration tests, synthetic demos. Does **not** keep `@AIStudyAgentTPBot` alive. |
-| **Take over existing public bot** | A **single designated operator** uses credentials legitimately transferred by the original owner through a secure channel, or coordinates an authorized BotFather ownership/credential transition if supported. The SAME bot token identifies the SAME Telegram username and link. Only **one** poller worldwide may use it at any time. | Coordinate the existing ngrok account/domain **or** replace the HTTPS origin and update every dependent configuration/Google OAuth client URI. Create fresh account-bound data/consents rather than copying private developer state. | Judge-facing continuity of `https://t.me/AIStudyAgentTPBot` after the original laptop is stopped. |
+### Remaining work in practical order
 
-**Do not assume the existing ngrok hostname moves to a teammate's account.** That
-hostname is associated with the original ngrok account. To keep the exact existing
-hostname, the authorized account operator must run its tunnel on the replacement host;
-**never** paste ngrok authentication tokens into Git, chat or screenshots. If the
-replacement uses a different hostname, coordinate all of the following **before**
-stopping the current public host:
+1. Resolve or explicitly accept the **owner background generation blocker**. Preserve
+   the working nonowner PDF path. The minimum quiz quality target is demonstrable
+   grounding in real learning content, not production-level pedagogy.
+2. Review quiz quality only as necessary: valid questions/answers, supported explanations,
+   learning rather than administration questions, assessment scope when requested.
+   Do not invent content or bypass grounding to obtain a green status.
+3. Clean Telegram responses: the latest screenshot shows both a saved-request message/
+   button and a second preparing response. Improve clarity without rerunning inference,
+   duplicating jobs or claiming a queued job is ready. Final failed-job feedback needs care.
+4. Refine Mini App mobile layout, spacing, loading/error states and navigation using
+   existing HTML/CSS/JS. Keep attempt persistence and answer-key privacy intact.
+5. Run owner and nonowner acceptance. Separately verify the Calendar planning slice.
+6. Assess and implement the missing scheduled study support and Calendar heartbeat
+   hooks if required for the chosen demo; these are not demonstrated by existing cleanup.
+   Reuse current session management and approval executors; avoid a parallel scheduler
+   architecture or experimental coordinator. Record any incomplete behavior honestly.
+7. Record the successful demo, prepare slides/submission, measure time savings and
+   assign an available host operator. Confirm organizer-specific deliverables separately.
 
-- Set the new private `config/deployment.json` `mini_app_url` and allowed host to the
-  exact new HTTPS origin. Start the new API and ngrok tunnel on that host and check
-  public `/`, `/privacy`, `/health`, signed Telegram Mini App access and private-route denials.
-- In the appropriate **Google Cloud project and Web OAuth client**, add/update the exact
-  authorized redirect `https://NEW-HOST/oauth/google/callback` and update Branding
-  homepage/privacy/authorized domain as required; verify Google's actual consent and
-  callback with the new origin. Existing Google OAuth Production status belongs to the
-  original project, not a newly created one. Do not share personal Google login
-  credentials; use proper project permissions for a designated maintainer.
-- Update Telegram's Dashboard/Mini App menu button URL and verify `/start` on a real
-  account launches the NEW origin. The username `@AIStudyAgentTPBot` remains unchanged
-  only if its original bot identity/token remains the one being operated.
-- Use new local SQLite records and have students reconnect their **own** Google accounts
-  unless a separate, explicitly approved and privacy-reviewed data migration exists.
-  Existing OAuth tokens use Windows DPAPI and the original Windows identity, so a simple
-  `.db` copy to another computer will **not** make connections transferable. **Never
-  transfer Brightspace Microsoft SSO/cookies/session or private course data.**
+## Current owner blocker
 
-**Safe cutover checklist for the same public Telegram bot:**
+Latest user test, approximately **20 October 00:00 Asia/Singapore**:
 
-1. Original operator and incoming operator agree a short maintenance window, assigned
-   hosting machine, private credential provisioning, rollback contact and judging coverage.
-   Do not post bot tokens, IBM keys, client JSON, ngrok tokens or DB files to GitHub.
-2. Stage the replacement's code/dependencies/config with **its own** account data. Test
-   FastAPI/ngrok first without starting a second live Telegram poller. Preserve explicit
-   approval, actor identity and source read-only boundaries. Do not expose a synthetic
-   preview server or private admin port publicly.
-3. On the original host: assess pending consequential bot updates without consuming,
-   discarding or advancing Telegram offsets; create a verified private SQLite backup;
-   stop the **original** bot poller before the replacement bot starts. If switching web
-   hosts, coordinate the API/tunnel and Google redirect/menu cutover as above.
-4. Start **exactly one** poller for the original bot token on the designated host.
-   Verify `/start`, a real greeting, a signed Mini App session, isolation between users,
-   Google OAuth from an unlisted account, the actual callback, public privacy URL and
-   an intentionally reviewed action. Test rejected/expired approvals and no accidental
-   writes. The two-tester conversation gate is still a separate release blocker.
-5. Confirm the actual public bot, Mini App, homepage and privacy URL remain accessible
-   from a different device/network. Monitor logs for polling conflicts, OAuth redirect
-   mismatch, ngrok warnings and provider failures. **Only then** retire the old
-   API/tunnel and let the original laptop go offline. If replacement fails, restore
-   the original single-poller deployment safely; never run both simultaneously.
-6. Keep the assigned host online for the entire judging period or explicitly document
-   scheduled availability. A video demo is an honest fallback, not a substitute for
-   a live endpoint when judges expect hands-on access.
+```text
+Generate a short practice quiz for my GRSP module's real quiz in w3 now.
+```
 
-**Start commands on the designated Windows host** (from README; separate terminals,
-with fresh per-host credentials and configuration):
+Telegram reported a saved practice request and linked Generated Practice. The Mini
+App showed "Preparation failed or was interrupted. No partial quiz was published".
+A separately approved read-only metadata inspection found exactly one job in the
+narrow test window: **status failed, error_code generation_failed, no published set**.
+No source/message text, credentials or identifiers were displayed/exported; records
+were not modified. The scoped log check found no detailed failure markers.
+
+**Confirmed boundary:** the request got past discovery/queueing into the background
+job path. This does not establish correct source selection, quiz quality or successful
+publication. The worker's broad exception handler maps almost everything to
+`generation_failed` and discards the original exception. Therefore the actual failed
+stage and exception are **unknown**. Do not call this a proven provider error, content
+review rejection, authorization error, token limit or blank-padding recurrence.
+
+### Exact code path and smallest next investigation
+
+- `practice_native.operation` -> `practice.request_practice` -> source qualification ->
+  `PracticeStore.enqueue`. A saved job is preparing, not a completed quiz.
+- `bot.post_init` starts `practice.worker` when practice is enabled.
+- `practice.run_one` claims a queued job in a transaction, constructs the provider,
+  rechecks LMS owner authorization, qualifies if needed, calls `generate`, rechecks
+  authorization, then publishes the complete set transactionally.
+- `generate` writes batches of at most five questions using `deliver_practice`, validates
+  schema/count/citations, and calls `practice_grounding.review`. One correction is allowed
+  for returned invalid content. Unknown/uncertain transport failures are not replayed.
+- The broad catch stores `generation_uncertain` only for `inference_uncertain`;
+  most other exceptions become `generation_failed`. Restarted running jobs become
+  `generation_interrupted`. The latest job was **generation_failed**, not interrupted.
+
+Instrument the worker with **constant stages and allowlisted categories only**:
+provider creation, authorization, qualification, generation/validation/review and
+publication. Existing `provider.last_error_metadata` can supply bounded HTTP status/
+known provider codes. Never log exception text, request payloads, answers, source
+passages, account IDs, URLs containing credentials or raw provider responses.
+`preparation_stage` currently covers synchronous preparation, not this worker.
+Reproduce the resulting category with synthetic sources and a temporary database;
+make the smallest fix, run the relevant regression, then request deployment approval.
+Do not replay/change the failed production job or inspect its frozen evidence without
+new explicit approval. Prior inspection permission covered only metadata for named turns/jobs.
+
+The final attempt ended because the necessary historical exception was not retained.
+**No speculative application fix was made and no additional release was deployed.**
+
+### Bounded next patch and its verification
+
+This is a recommended next action for the teammate, **not an implemented patch**:
+
+1. Add a local constant stage variable or a small existing-style context wrapper to
+   `run_one`, covering provider setup, owner authorization, optional qualification,
+   generation and publication. To distinguish draft from review, add equally small
+   stage markers around the relevant `generate` calls. Avoid a new telemetry system.
+2. Preserve the existing job states/error codes, transactional claim/publication,
+   provider cleanup and no-replay behavior. Only add sanitized diagnostics. Use a
+   fixed mapping from known exception/provider codes to categories; never `str(error)`,
+   `repr(error)`, traceback payloads or arbitrary metadata dictionaries.
+3. Add focused synthetic tests for one failing provider, source authorization denial,
+   returned invalid generation/review and publication failure. Verify no set is
+   published, no second job/inference replay occurs, and private marker strings do
+   not appear in logs. Reuse existing fixtures rather than duplicating the application.
+4. Report the concrete diff and checks, obtain deployment approval, then request
+   permission for the precise diagnostic metadata needed from one owner reproduction.
+   Existing historical permissions do not extend to new live records.
+5. Use that category to choose **one** causal correction. If diagnostics still do
+   not distinguish the failure, say what additional evidence is needed before making
+   another behavioral change. Do not lower review/grounding requirements speculatively.
+
+The source cannot reconstruct an exception that was never retained. A future
+synthetic success is supporting regression evidence, not proof about that historical
+job. The user explicitly chose to stop the original agent's debugging and hand off;
+the teammate should agree a new bounded work allocation before continuing.
+
+## Progress already made - do not repeat investigation
+
+| Commit | Change and practical limit |
+|---|---|
+| `4aa351a` | Source qualification, learning-grounded generation/review and scope restrictions; synthetic evidence is not live acceptance |
+| `00592b7` | Known inline-size refusal permits private temporary download up to 20 MiB, then extraction; unrelated read failures are not size failures |
+| `c0c8235` | Compact catalogs with parent titles, per-turn snapshots, evidence feedback and completion recovery; time/repetition bounds replace fixed total call/round count |
+| `f76c2d6` | Shared readable text view removes PDF layout padding consistently for read/selection; specific insufficient-excerpt recovery and safe preparation diagnostics |
+
+Earlier live reads contained 6,000 characters with only 108 non-whitespace characters,
+including 2,670 leading blanks. A synthetic reproduction established that selecting
+that raw prefix can fail despite text elsewhere. The fix preserves original segments
+and revisions, uses readable-view offsets in both read/preparation, and leaves uploaded
+note coordinates unchanged. The earlier historical selection arguments/exception were
+not persisted; it was never proved to be the sole cause of those live failures.
+
+The alleged provider ten-tool ceiling was a **local advertised-function allowance**.
+Eleven offered tools were verified with real IBM synthetic calls; the wrapper now permits
+sixteen (only eleven verified). There is **no fixed total tool-call limit** in the main
+loop; a 90-second deadline and repeated-no-new-information detection bound execution.
+Do not confuse advertised function count with the number of tool executions.
+
+`BrightspaceRetrieval.search_learning_materials` exists but is **not** exposed by the
+native facade (courses/materials/read). Its local search is lexical. Adding search is
+not the demonstrated fix for the latest worker failure. Do not revive the excluded
+multi-goal coordinator, hardcoded course/week/intent routing, broad cap increases or
+authentication redesign. Pinned upstream MCP 3.13.18 auth/refresh/login side effects
+were explicitly accepted for this PoC; the controlled-startup experiments were discarded.
+
+## Implemented versus verified
+
+- **Live-tested:** nonowner uploaded-PDF -> generated quiz -> Mini App flow, per developer
+  report. Latest owner request saved a job but failed before publishing a quiz.
+- **Implemented and synthetic-tested:** actor-owned material/quiz/attempt storage,
+  private answer keys until submission, independent resume/save, scores/explanations,
+  cross-user denials; owner source gate; Calendar tools and exact approval boundaries.
+- **Not established end to end:** reliable owner Brightspace generation, real assessment
+  discovery -> revision plan, scheduled session quiz delivery, proactive study-time
+  notifications, periodic Calendar conflict monitoring and approved adaptation.
+- **Source check:** `bot.maintenance_loop` reconciles previous approvals at startup and
+  expires requests every 30 seconds. It is **not** a Calendar conflict heartbeat.
+  No session-triggered practice-generation hook was established in this review.
+- **Needs user acceptance:** complete current owner/nonowner flows, fresh-account OAuth,
+  plan amendment/approval, Mini App results and isolation. Do not revive historical bugs
+  as proven current failures without reproducing them.
+
+## Scope to preserve
+
+Anyone completing `/start` should receive ordinary features. Brightspace is strictly
+for the configured environment owner; teammates configure their own school account.
+No public per-student Brightspace onboarding is planned. Nonowners use pasted notes/
+PDFs. All material, citations, quizzes, attempts and progress must remain actor-owned.
+
+Both spontaneous and scheduled practice are required in the intended demo, but their
+implementation/verification differs as noted above. Spontaneous practice must not
+require a plan, Calendar connection, dates or session count. Use actual learning
+explanations; teaching plans establish scope only. Never infer exam dates from assignment
+deadlines or fabricate dates. Without dates, offer generic planning. No answer keys
+in Telegram; quizzes are untimed, with independent saved progress and wrong-answer review.
+
+**Excluded:** adaptive difficulty, announcement monitoring, complex combined requests
+and the experimental coordinator. Standalone requests suffice. IBM provider/model stays.
+
+Intended adaptation demonstration: manually introduce a Calendar event overlapping an
+approved study session; a periodic check finds it, notifies the student, proposes available
+alternatives and waits for exact approval before changing Calendar. Normal interval can
+be 5-10 minutes, demo 30-120 seconds. This is a requirement, **not a verified feature**.
+
+## Tests already run
+
+Do not rerun the entire historical investigation to regain confidence.
+
+- Earlier independent full suite: 486 tests; 472 passed, 12 skipped, two issues.
+  The obsolete forced-tool-choice assertion was corrected and focused checks passed;
+  the Windows DPAPI synthetic check passed separately outside sandbox restrictions.
+  Eleven skips were historical diagnostics and one platform-specific.
+- Layout candidate: learning-text/LMS/quiz-refinement focused run **46 passed**;
+  after diagnostic logging, learning-text/practice **53 passed** (overlap, not additive);
+  native completion **8 passed**.
+- Deployment `f76c2d6`: **14 focused regression tests passed** in root; syntax and scoped
+  whitespace checks passed. No full-suite rerun was performed.
+- Layout-heavy synthetic PDF plus actual IBM: first trial HTTP 500 before tools; a
+  separate trial completed a saved three-question quiz in **16.52 seconds**, with
+  harness grounding/resume/submission/scoring/isolation assertions. No real school,
+  Calendar or Telegram operations were used. This did not prove the live owner case.
+- Older combined synthetic cases covered owner, assessment, long documents, repeated
+  filenames, missing material and nonowner PDF. Earlier experimental variants had mixed
+  success; do not describe all variants as one reliable implementation.
+
+Focused command and setup are in README. Full offline suite, only when changes warrant:
+`python -m unittest discover -s tests -p "test_*.py"`. Use the project venv and temporary
+DB fixtures. Historical logs, traces and worktrees are local/ignored, not teammate
+runtime dependencies. Never upload real school records or credentials to reproduce a test.
+
+## Useful preserved investigations
+
+These paths exist **only on the original host** under `.worktrees/`; they are not pushed
+as source. Do not replace current deployed files with their uncommitted variants.
+
+| Worktree | Meaning |
+|---|---|
+| `owner-tool-flow` | Earlier experimental paging/recovery; uncommitted, not approved candidate |
+| `owner-quiz-independent` | Independent tool-cap/discovery/loop experiments and synthetic traces |
+| `owner-preparation-failure` | Layout-padding reproduction, metadata-only diagnostic and tested fix |
+| `owner-final-attempt` | Clean `f76c2d6` checkout created for the last attempt; no speculative fix |
+
+Current tracked notes: `docs/owner-quiz-loop-release.md`,
+`docs/owner-preparation-layout-investigation.md`, `docs/quiz-refinement-batch1.md`,
+`docs/brightspace-private-reading-release.md`, `docs/brightspace-upstream-startup.md`.
+Read their limits; earlier statements such as fixed tool limits or disabled retrieval
+may be superseded by later source. Local deployment records are ignored JSON artifacts.
+
+## Independent services and hosting
+
+**Existing public Telegram bot: abbi,
+[@AIStudyAgentTPBot](https://t.me/AIStudyAgentTPBot).** The developer wants the team
+to be able to continue using this identity. A new bot is not required for a shared
+host takeover. Telegram retains the identity, but the Python polling process and
+its practice worker must run on the designated host to provide service. The API,
+Mini App assets and public HTTPS connection must also be available on that host.
+The original laptop can be off only after the replacement backend is running.
+
+Follow README setup using your own bot, database and credentials. The tracked examples
+are deliberately disabled. Conversation audience supports `onboarded_users`; it does
+not grant Brightspace owner rights. Use `provider: orchestrate` for this hackathon.
+The active native gateway uses `groq/openai/gpt-oss-120b` through IBM Orchestrate, not
+remote Calendar tool registration or an independently selected replacement provider.
+
+Google OAuth: create your own approved web client, use ignored
+`backend/credentials/google_multiuser_client.json`, configure your HTTPS origin and
+callback `/oauth/google/callback` (confirm `google_oauth.OAuthSettings.redirect_uri`),
+and set local Google feature flags deliberately. Windows DPAPI-encrypted grants do
+not transfer to another Windows user/machine. Google console publishing is not hosting.
+
+Brightspace: configure ignored `config/brightspace_runtime.json` or the corresponding
+runtime environment with `LMS_MCP_PACKAGE_ROOT`, `LMS_SESSION_DIR`, `LMS_TENANT_ORIGIN`,
+`LMS_EXPECTED_ACCOUNT`, `LMS_NODE_EXECUTABLE`. Paths must be absolute; tenant is an
+HTTPS origin. Install pinned MCP 3.13.18 and legitimately authenticate your own school
+account through upstream browser SSO/MFA. A separate owner-approved SourceStore
+`developer_session` binding is required; never silently bind/reuse another person's
+session. Do not run historical operator/status scripts as a generic setup step:
+some load protected session material. Read `lms_upstream_startup.py` and relevant docs.
+
+Original live host: Windows laptop at `C:\Users\USER\Downloads\AI-Study-Agent`, one
+Telegram poller, FastAPI on loopback port 8000, ngrok public HTTPS. Closing the host
+or tunnel takes the demo offline. Hosting transfer requires an agreed operator,
+private supported secret provisioning, approved database handling, matching OAuth
+redirect/origin and a deliberate single-poller cutover. Do not copy DPAPI blobs or
+school sessions and assume they work. `/start` does not prove every external integration.
+
+### Decide which environment you are setting up
+
+**Independent development/demo:** use a new bot token, your own positive owner ID,
+new SQLite database, your authorized IBM credentials, your own Google OAuth client,
+your own public origin/tunnel and your own Brightspace login/session. The original
+laptop can be off; its bot identity, data and grants will not appear in your clone.
+This is the recommended way for multiple teammates to develop independently.
+
+**Replacing the host of the existing public bot:** coordinate with the bot owner.
+This is an operational cutover, not an independent clone. Secret provisioning,
+existing user data, Google grants, public URL and school session authorization need
+separate decisions. Never start a second poller to "see whether it works". Existing
+Windows DPAPI grants are not portable; users may need to reconnect on the new host.
+No database export/migration or credential transfer is authorized by this document.
+
+For the team's shared abbi demo, designate one teammate/host as the active operator.
+Keep the bot token only by authorized private provisioning; it is not included in
+GitHub. Configure IBM, Google, Brightspace, the public origin and local paths for
+that agreed environment. Keep API and bot on the same token/database/configuration.
+This is not a plan to let every teammate independently poll the same public bot.
+Separate experimental bots are optional and useful for concurrent independent work.
+
+#### Component-by-component takeover checklist for abbi
+
+| Part | Reuse or configure | Verify before turning off the original host |
+|---|---|---|
+| Public bot | Reuse `@AIStudyAgentTPBot`; privately provision its existing token with owner authorization | Original poller stopped, exactly one replacement poller; `/start` and replies work |
+| Mini App frontend/API | Deploy repository assets and FastAPI on replacement host; update `mini_app_url` | Dashboard menu/button target, Telegram-signed API access, practice attempts and grades |
+| ngrok/public HTTPS | Configure replacement host's authorized tunnel/assigned stable origin | Public health/static pages; origin and Google callback match; no assumption of old hostname ownership |
+| IBM Orchestrate | Configure authorized `WXO_*` credentials for the agreed instance/agent | Basic inference then the actual tool/generation path; do not stop at a greeting |
+| Google Calendar | Configure authorized OAuth client, local flags and matching new redirect | Each student reconnects as required; own account only; no event changes without exact approval |
+| Brightspace | Configure Node/package/session paths, tenant/account and legitimate owner login | Owner-only connection/read works; nonowner denied; no copied school session |
+| Telegram owner binding | Deliberately retain or change the environment owner as agreed | Owner ID, school account and DB connection agree; no silent existing-binding overwrite |
+| SQLite/state | Explicit fresh environment or separately approved supported migration | Correct practice/LMS schema, persistence, isolation; no assumption that DPAPI grants are portable |
+| Runtime/uptime | Supervise API, tunnel and one bot/worker on the replacement host | Restart behavior, private logs, persistent storage and operator access for SSO renewal |
+
+User-facing bot identity can stay unchanged while its backend host changes. A fresh
+database nevertheless means fresh backend profiles/history unless a separate data
+migration is approved. Inform testers if old quiz results or connections will not
+be available. Never copy the original Windows profile or decrypt/export grants just
+to preserve the appearance of continuity.
+
+### Complete configuration examples (placeholders only)
+
+These examples contain no working credentials. Replace placeholders privately,
+never in Git or an AI chat. Use valid JSON with double quotes, booleans and no comments.
+The existing strict loaders reject extra fields. Bot and API must run from the same
+project checkout and use consistent configuration and the same bot token.
+
+Private `.env` values needed by the current application:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=YOUR_OWN_BOTFATHER_TOKEN
+TELEGRAM_OWNER_ID=YOUR_OWN_POSITIVE_NUMERIC_TELEGRAM_ID
+WXO_API_URL=YOUR_AUTHORIZED_IBM_ORCHESTRATE_INSTANCE_URL
+WXO_API_KEY=YOUR_AUTHORIZED_IBM_ORCHESTRATE_KEY
+WXO_AGENT_ID=YOUR_AUTHORIZED_DEPLOYED_LIVE_AGENT_UUID
+```
+
+Do not use these literal placeholders to launch. An operator can obtain their numeric
+Telegram identity through a trusted account mechanism; do not make the LLM invent it.
+Changing the owner ID does not migrate an existing LMS connection to the new actor.
+Use a new DB for a genuinely independent environment.
+
+`config/conversation.json` for ordinary onboarded users:
+
+```json
+{
+  "enabled": true,
+  "audience": "onboarded_users",
+  "provider": "orchestrate",
+  "model_id": "groq/openai/gpt-oss-120b"
+}
+```
+
+`model_id` is present in the generic conversation settings; the native Orchestrate
+provider's `MODEL` constant determines the current gateway model. Changing this JSON
+string alone is not a supported model migration. Keep the hackathon IBM path.
+If using `calendar_testers` instead, `config/calendar_test.json` must explicitly
+enable the intended tester IDs. This is an optional restricted test mode, not the
+product's intended public-onboarded audience. Test commands are separate from ordinary chat.
+
+`config/practice.json`:
+
+```json
+{"enabled": true}
+```
+
+`config/deployment.json`, using an example origin that the operator must replace:
+
+```json
+{
+  "mini_app_url": "https://your-assigned-host.example.com",
+  "ngrok_executable": "C:/Tools/ngrok/ngrok.exe"
+}
+```
+
+Use your actual assigned public HTTPS DNS origin, with no path, query, credentials,
+fragment or nonstandard port. An ngrok executable on PATH can simply be `ngrok`.
+The `run.py tunnel` command expects a matching domain assigned to your ngrok account.
+Configure ngrok authentication with its normal private supported mechanism; its
+token does not belong in deployment JSON or Git. Do not copy the old reserved domain
+unless its owner explicitly arranges its authorized use.
+
+`config/google_oauth.json`, initially availability-only:
+
+```json
+{"enabled": true, "event_writes_enabled": false}
+```
+
+Only change `event_writes_enabled` to true when ready for the separately consented,
+approved Calendar write flow. Enabling the flag itself does not grant Google scopes
+or authorize an event. Do not disable exact human approval for testing convenience.
+
+`config/brightspace_runtime.json` uses these five exact keys. Example paths are
+illustrative and must match your installation; use forward slashes in JSON:
+
+```json
+{
+  "LMS_MCP_PACKAGE_ROOT": "C:/Tools/AIStudyBrightspace/node_modules/brightspace-mcp-server",
+  "LMS_SESSION_DIR": "C:/Private/AIStudyBrightspace/sessions",
+  "LMS_TENANT_ORIGIN": "https://your-school-brightspace.example.com",
+  "LMS_EXPECTED_ACCOUNT": "your-own-authorized-school-account",
+  "LMS_NODE_EXECUTABLE": "C:/Program Files/nodejs/node.exe"
+}
+```
+
+This runtime file is ignored. It is not an export of a login/session. Actual school
+session state must be created by legitimate upstream authentication on your host.
+The runtime also supports these settings in the process environment; verify which
+configuration the launched bot actually receives without printing account/secret values.
+
+### Telegram and Mini App provisioning
+
+1. Choose the shared abbi takeover or an independent development bot. For abbi,
+   coordinate existing-token provisioning privately with its owner and the poller
+   cutover below. For an independent bot, use BotFather and your own token. Do not
+   revoke/rotate the live token merely to make a clone work.
+2. Configure the same token in bot/API so signed Mini App launch data validates.
+   Changing tokens requires restarting both processes; never accept unsigned data.
+3. Configure the public origin, start the API and HTTPS tunnel, then one bot poller.
+   The application sets the Dashboard menu and reads it back for verification.
+   `/start` also provides a Dashboard link. Check the actual Telegram menu target.
+4. Open the Mini App from that bot in Telegram. An ordinary browser has no valid
+   Telegram identity, so private endpoints should return 401. Use synthetic signed
+   fixtures for automated tests instead of bypassing identity verification.
+5. Test an owner and nonowner through their own accounts. Onboarding/profile UI may
+   still say per-student Brightspace is unavailable; the configured owner integration
+   is a separate environment-level capability, not public school onboarding.
+
+### IBM Orchestrate provisioning and limits
+
+Obtain authorized access to the hackathon IBM instance and its deployed LIVE agent.
+Use the instance URL, key and LIVE agent UUID from that environment's administrator/
+supported console configuration. Do not put a watsonx.ai Runtime project ID or key
+into the `WXO_*` fields. The current `Configuration` validator specifically supports
+the Toronto IBM Cloud host `api.ca-tor.watson-orchestrate.cloud.ibm.com` with
+`/instances/<instance-id>`; other deployments require a deliberate compatibility
+review rather than editing validation until credentials appear accepted.
+
+The application handles IBM authentication through its normal loader/transport.
+No model-facing tool receives IBM credentials, and no remote Calendar tool registration
+is needed. Keep the native gateway/provider selected. A successful greeting proves
+basic inference only; it does not prove source qualification, tool output formatting,
+generation or content review. Log bounded HTTP status/error categories, never raw
+provider request/response payloads. Do not automatically retry uncertain inference.
+
+The coding assistant's weekly usage and the application's IBM inference are separate
+resources. Reduced coding-agent usage does not explain this stored generation failure.
+Actual IBM transport/provider errors need their own evidence; previous synthetic
+HTTP 500s are not proof of the latest live job's cause.
+
+### Google project, consent and reconnection
+
+1. Use a Google Cloud project you own or are authorized to operate, with Calendar
+   API enabled and an OAuth consent configuration appropriate to its audience.
+2. Create/configure a **Web application** OAuth client. The downloaded JSON must
+   contain the supported `web` configuration; the service checks it through the
+   existing library. Store it as ignored
+   `backend/credentials/google_multiuser_client.json`, not as source or a chat attachment.
+3. Register the exact redirect URI
+   `https://YOUR_ACTUAL_ORIGIN/oauth/google/callback`. The current public origin and
+   client redirect must agree. Configure the applicable authorized origin/privacy
+   URL for your application. Review `frontend/privacy.html` before reusing its
+   original operator contact or outdated feature wording.
+4. Use the local Google flags above. Initial consent requests
+   `https://www.googleapis.com/auth/calendar.freebusy`. Event management additionally
+   uses `https://www.googleapis.com/auth/calendar.events.owned`, separately from an
+   individual event's exact approval.
+5. Each Telegram student connects **their own Google account** through the official
+   external browser flow from Mini App Settings/Connections. Do not ask for Google
+   passwords or tokens in Telegram. Read-only consent is enough to test connection;
+   do not create real events merely to verify the OAuth callback.
+6. After a new OAuth client, hostname, machine or Windows user, arrange legitimate
+   reconnection as needed. A copied SQLite grant cannot simply be decrypted by a
+   teammate because `WindowsTokenCipher` uses Windows DPAPI plus actor-specific
+   entropy. Do not copy another user's Windows profile to work around this.
+
+The original operator reported their own Google consent app as External/In production;
+that status is not inherited by a teammate's new project. New users/institutional
+accounts may face consent or app-verification restrictions. This review did not
+verify fresh-account acceptance, and docs must not imply that it did.
+
+### Brightspace package, session and owner binding
+
+Install the **pinned** `brightspace-mcp-server@3.13.18` in an operator-controlled
+location with the required Node/browser runtime. Set `LMS_MCP_PACKAGE_ROOT` to the
+installed package directory, not its parent or executable. The loader checks name,
+version and `build/index.js`; do not use an unpinned `npx ...@latest` launch.
+
+The upstream session lifecycle may read native/global school configuration, refresh/
+persist auth state and open a visible school SSO/MFA browser. Those side effects were
+accepted for this PoC. Use your own authorized account and private session root.
+Updates are disabled, unrelated bot/IBM/Google secrets are not passed to the MCP child,
+and read operations remain allowlisted. Do not resurrect the discarded controlled-
+startup redesign merely because an expired session requires upstream reauthentication.
+
+After legitimate authentication, the new environment owner must explicitly approve
+binding that developer session to their Telegram owner in their fresh database.
+`SourceStore.bind_authorized_developer_session` is an administrative function, not a
+public onboarding endpoint. There is intentionally no per-student school-login UI.
+An authorized operator may use this application-code pattern **only for their new
+own environment**, after verifying its owner configuration and provisioning:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'backend'); import bot; from services.source_store import SourceStore; SourceStore(bot.OWNER_ID).bind_authorized_developer_session(); print('Owner connection bound.')"
+```
+
+This is a deliberate local DB write, not an automatic test or permission to modify
+the original production binding. It refuses an existing developer-session binding;
+do not delete/rebind one to work around it. The `bot` import consumes private config
+through the normal application loader without starting polling under its main guard.
+Do not print the returned connection ID or inspect protected session files manually.
+
+The owner gate is rechecked on cached reads and queued-job execution. Nonowners
+must not see the owner's catalog, notes, source references or generated sets. A
+session file alone does not satisfy the owner/connection checks. Cached evidence
+is not permission to continue after authorization is revoked.
+
+### Fresh database, persistent storage and process lifecycle
+
+Follow README's new-clone setup. Prefer `scripts/init_database.py` on a brand-new
+checkout: it refuses an existing database, creates base/LMS/practice schemas and
+checks integrity. `include_practice=True` matters: normal startup intentionally does
+not create practice tables. A practice flag with missing tables is not a generation fix.
+
+Persistent paths include `database/study_agent.db`, `.private-lms/`, configured private
+school session storage and private configuration. They must be writable and protected
+for the chosen host user; never commit/upload them. Temporary school binaries use
+private bounded scratch directories and are cleaned up; normal source evidence can
+remain in the owner-private cache. Do not treat caching as public content storage.
+
+Start separate foreground terminals, all in the same project checkout:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/run.py api
-.\.venv\Scripts\python.exe scripts/run.py check --local
 .\.venv\Scripts\python.exe scripts/run.py tunnel
-.\.venv\Scripts\python.exe scripts/run.py check
-# Start ONLY after verifying no other poller uses the same Telegram bot token:
 .\.venv\Scripts\python.exe scripts/run.py bot
 ```
 
-**Who owns what after handover:** record one person for (a) live bot/token custody and
-polling; (b) ngrok HTTPS origin; (c) Google OAuth project/client and authorized redirects;
-(d) IBM Orchestrate credentials and LIVE agent; (e) uptime, consent/security checks and
-rollback; and (f) judge-facing account tests. Transfer only the minimum required access
-through an approved private channel. If nobody owns deployment, **the GitHub repository
-alone will not keep the public project online**.
+For unattended hosting, configure appropriate supervision manually after acceptance.
+Use a stable working directory, persistent disk, private logs and exactly one bot
+poller/worker. The host needs outbound IBM/Telegram/Google/school access. Browser
+reauthentication may need operator interaction. Do not assume a sleeping laptop,
+temporary shell, static GitHub Pages site or ephemeral serverless process hosts
+this Python/SQLite/browser application continuously.
 
-### Recommended ownership and release priority
+Keep the direct deployment on Windows unless a token-storage/runtime port is
+explicitly undertaken. A Windows VM/another Windows machine can remove reliance
+on the original laptop, but the team must supply/manage that host and authorized
+services; this project does not provision hosting automatically.
 
-| Priority | Suggested owner/lane | Minimum deliverable and acceptance evidence |
+### Safe cutover of the existing public service
+
+1. Assign one operator and agree whether this is an independent bot or a deliberate
+   replacement of the existing service. Review exact code/configuration first.
+2. Stage dependencies, origin, OAuth client and authorized new-host state without
+   launching a duplicate poller. Obtain separate approvals for production backup,
+   record migration or secret provisioning if needed. A source push covers none of them.
+3. Check current pending Telegram update metadata without consuming/dropping updates.
+   Stop the verified original bot before starting its replacement. Preserve pending
+   updates (`drop_pending_updates=False`); never blindly replay uncertain operations.
+4. Launch one replacement bot plus its correctly configured API/HTTPS route. Verify
+   process identity/startup, Dashboard menu target, public health and signed Mini App
+   access. Verify there is no polling conflict and that the practice worker is running.
+5. Reconnect Google/school accounts through legitimate flows where required. Test one
+   owner and nonowner scenario. Validate user isolation and exact Calendar approvals.
+6. Keep rollback source/configuration available; rollback is not a database reset.
+   Agree whether to stop the new poller before restoring the old one. Never run both.
+
+No cutover steps are performed or implicitly approved by maintaining this handover.
+
+## Debugging and validation guide for the next AI partner
+
+### Useful files and contracts
+
+| Area | Entry point / contract to preserve |
+|---|---|
+| Natural conversation | `conversation_telegram.py`, `conversations.py`; private sender, onboarding audience, bounded context |
+| Native orchestration | `calendar_native.py`, `native_progress.py`; time/repetition bounds and model-selected tools |
+| IBM transport | `orchestrate_native.py`, `orchestrate_client.py`; sanitized metadata, schema checks and no uncertain replay |
+| LMS discovery/read | `lms_native.py`, `lms_retrieval.py`, `lms_mcp.py`; owner gate, bounded catalogs, citations and read ranges |
+| Source ingestion | `source_store.py`, `document_extraction.py`, `learning_text.py`; owner revisions and consistent excerpt coordinates |
+| Practice request | `models/practice.py`, `practice_native.py`, `practice.py:evidence_for/request_practice`; only owned evidence |
+| Grounding | `practice_grounding.py:qualify/review`; model interprets scope; Python binds exact source passages |
+| Job execution | `practice.py:run_one/worker/generate`; claim once, recheck owner, publish complete set transactionally |
+| Attempt state | `practice_store.py`, `routes/practice.py`, `frontend/practice.js`; revision checks, independent saves, private key until submission |
+| Calendar review | `pending_proposals.py`, `calendar_actions.py`, `calendar_management.py`, `calendar_telegram.py`; frozen exact approval and actor ownership |
+| Identity/settings | `api.py`, `profiles.py`, `google_oauth.py`, `token_cipher.py`; signed Telegram actor and per-user Google grants |
+
+Source selection bounds are currently four learning selections plus up to two
+assessment selections; each range is at most 6,000 characters. A request has one to
+ten questions, default five; generation batches at most five. These bounds are not
+intent routing. The material facade may return up to 60 compact entries within its
+serialized bound, and documents expose continuation offsets. Never assume a catalog
+or first excerpt represents complete evidence.
+
+Practice jobs are claimed before inference. Running jobs become interrupted on bot
+restart; queued jobs remain available. No partial set is published. A student can
+explicitly make a new request after failure; do not silently replay the old job.
+At most three active and twenty recent daily requests per actor are accepted by
+the store. Attempt answers are saved per attempt with revision/conflict handling;
+opening another quiz must not overwrite an unfinished attempt.
+
+### Distinguish these failure boundaries
+
+| Observation | What it establishes | What to check next |
 |---|---|---|
-| **P0 — judge access** | Teammate 1: Telegram/Calendar | A **third, previously unlisted** Telegram user can chat with Orchestrate and use their own Calendar without borrowing admin rights. Remove audience gates only through an explicit policy, preserve signed identity, user isolation, approvals and rate bounds. Test the existing two users still work. |
-| **P0 — Calendar bug** | Teammate 1 | Reproduce `"next two weeks"` → `"2 a week should be enough"`; inspect sanitized invalid-action metadata, fix the schema/context cause, add a regression, then demonstrate a complete proposal → amendment → exact approval → own Google event → reschedule/cancel. No guessed success messages or unlimited tool loops. |
-| **P0 — external Google OAuth check** | Teammate 1 with a second volunteer | Use a Google account **not** on the former test list and a separate Telegram identity. Verify consent and callback, note the unverified warning/100-user cap, and do not reveal the person's token or calendar. Publishing status is already *In production*; this test is not yet passed. |
-| **P1 — academic evidence** | Teammate 2: Brightspace | Use their **own authorized** SSO session and the existing strictly read-only MCP/evidence code. Establish per-student binding and demonstrate a course/exam/deadline or a clearly labeled synthetic fallback with provenance and no cross-user leakage. No writing/mark-read/submissions. |
-| **P1 — learning practice** | Teammate 3: quizzes/weakness memory | Generate a small validated quiz grounded in authorized retrieved evidence or clearly labeled synthetic coursework; show source references, saved score/errors and a targeted follow-up recommendation in the existing Mini App. Existing demo MCQs alone do not meet this. |
-| **P1 — autonomous recovery** | Teammate 4: monitoring and demo | With consent, detect one meaningful change in a verified/synthetic exam deadline, explain before/after evidence, propose changed sessions and seek explicit approval. Reject leaves Calendar unchanged; notifications are deduplicated. Own the initial slide/video/demo evidence and time-saved measurement plan in parallel. |
-| **P2 — polish** | Everyone after P0/P1 | Better interface labels, nonessential automation, extra course types and deployment packaging **only if** the critical end-to-end demo and submission deliverables are already safe. |
+| `brightspace_access` | Actor/session binding not authorized | Owner/config/binding through approved metadata; never weaken gate |
+| `brightspace_unavailable` | Read could not be confirmed; generic adapter/config/external category | Safe schema/startup/transport metadata, not raw session dumps |
+| `brightspace_file_limit` | Document exceeds supported bounded file reading | Select smaller relevant content; do not retry same oversized file indefinitely |
+| `practice_sources_incomplete` | No job saved; selected evidence insufficient | Read relevant continuation/learning/scope evidence, distinguish bad range from whole missing document |
+| Telegram saved/preparing | Request saved | Wait for terminal job status; this is not proof of a valid published quiz |
+| `generation_failed` | Worker failed; no exact cause retained | Instrument worker stages before making another speculative fix |
+| `generation_uncertain` | Inference outcome uncertain | Do not blindly replay inference/job |
+| `generation_interrupted` | Running job invalidated on restart | Avoid publishing partial results; new explicit request if appropriate |
+| Static page 200, private API 401 in ordinary browser | Expected unauthenticated boundary | Open through Telegram or use synthetic signed tests |
+| Polling conflict | Likely more than one poller for one bot token | Identify verified process roles; stop duplicate deliberately |
 
-The four teammates should own these lanes; the original operator is not the default
-implementer of every remaining feature. If the P0 calendar/public access path cannot be
-finished, **flag it early**, do not pretend that the judges have unrestricted access, and
-record a stable, labeled video of verified functionality for the submission.
+Provider HTTP status, model refusal, source insufficiency and failed local validation
+are different categories. The Mini App's friendly combined error message cannot tell
+them apart. Do not infer the root cause from that text or from old synthetic failures.
 
-### Interfaces and dependencies — agree before parallel coding
+### Acceptance matrix to record, not assume
 
-- **Academic evidence → reasoning/quiz/monitoring:** Design an actor-owned source reference
-  with course/document identity, retrieval time, source revision or hash, text segments,
-  source citation and an *unknown/unverified* state. The existing `lms_retrieval.py` and
-  `source_store.py` own this foundation. This is a conceptual contract; verify actual
-  models and migration needs in code rather than treating this description as a schema.
-- **Quizzes → learning memory:** Save each question's evidence reference and source revision,
-  answer key, explanation and per-user attempt/mistake outcome. An LLM's plausible answer
-  must not replace source verification. Use the existing grades/results interfaces.
-- **Monitoring → planning:** Compare authorized source revisions, emit one idempotent
-  meaningful change (including a before/after citation), and request a revised proposal.
-  Never write to Brightspace or silently alter Calendar events; reuse the existing human
-  approval pipeline and Python Calendar executors.
-- **Identity across lanes:** Derive the Telegram actor from verified updates/initData;
-  external account/session bindings are per actor. No shared developer tokens or owner
-  shortcuts. All new persistence needs migration review and actor-isolation tests.
+| Check | Expected result | Evidence required |
+|---|---|---|
+| Owner spontaneous quiz | Actual relevant Brightspace notes produce a complete Mini App set | One real supervised request, final ready status and question/source spot-check |
+| Nonowner PDF | Own PDF produces set and private attempt | Live test plus synthetic cross-user denial regressions |
+| Isolation | Other actor cannot read materials, sets, attempts, grades or LMS cache | Two-user synthetic API/storage tests, no production student-record browsing |
+| Resume/grade | Independent draft survives another quiz; submission returns score/explanations | Save/resume both attempts and inspect only that user's UI |
+| Grounded explanation | Conversation teaches supported content with source reference | Actual learning evidence; no invented missing facts |
+| Assessment planning | Evidenced test/date and learning scope inform proposed sessions | Source-backed date/scope plus current availability, or explicitly generic plan |
+| Calendar revision | Change one proposal session, preserve others, exact approval | User-reviewed proposal and separately authorized real Calendar verification |
+| Rejection/idempotency | Reject causes no write; duplicate approval creates no duplicate | Synthetic regression plus bounded approved acceptance |
+| Scheduled support | Study-time notification and material-grounded quiz appear | Implemented trigger plus supervised observed delivery, not merely Calendar creation |
+| Conflict heartbeat | Added overlap produces one useful alert and alternatives | Supervised real/declared fixture conflict; reject then fresh approve change |
 
-### Minimum judge-facing acceptance scenario
+Do not automate real event writes/Telegram messages or inspect live student records
+to fill this matrix without specific approval. Use mock integrations by default.
+The earlier broad full-suite results are historical; run focused tests for a new
+causal fix, then broader tests only when warranted by changed scope/failures.
 
-1. New judge/test student opens [the bot](https://t.me/AIStudyAgentTPBot), uses their own
-   identity, and sees onboarding/settings. The public laptop host must be online.
-2. Agent discovers an exam/course/deadline from that student's authorized, read-only
-   Brightspace evidence **or an explicitly labeled synthetic fixture**; state which source
-   is real and cite it. If safe LMS login is absent, do not expose developer coursework.
-3. Student asks naturally for revision sessions; the agent uses preferences and their own
-   Calendar free/busy, proposes exact sessions, accepts one conversational correction,
-   requests exact approval and confirms only actual Google results.
-4. Student completes a course-grounded quiz. Scores and missed concepts persist and inform
-   a follow-up suggestion. Clearly separate this from preloaded demo MCQs.
-5. One changed exam deadline/announcement is detected from an authorized or synthetic
-   source. The agent explains the change and requests fresh approval before rescheduling;
-   rejection must not modify existing events.
-6. Show **evidence of time saved**: time the same manual workflow (clearly state which
-   steps were compared), record timestamps/steps for an agent run, and report actual
-   measurements with limitations. Do not fabricate comparison data or imply the agent
-   performed a step that was simulated.
-
-If not every step passes, demo the verified subset, mark synthetic or incomplete steps
-visibly, and report remaining defects. A video is a fallback, not proof the public bot
-works for unknown users. Verify all final links/permissions from an external account.
-
-### PR/deployment handoff checklist
-
-- Explain what changed, which existing module/interface is reused and what remains undone.
-- Show targeted mocked tests, actor-isolation/permission-denial cases and one supervised
-  integration test where safe. Do not run real Calendar writes automatically.
-- Update README's capability-status table and this document's owner/progress notes if the
-  feature has actually been tested; avoid carrying forward obsolete 'pending' claims.
-- Never commit `.env`, tokens, client JSON, school sessions/materials, user DBs, downloads,
-  backups, logs or sensitive historical Git objects. Run `python scripts/audit_publication.py --history`
-  and review diffs before a PR merge.
-- For the operator's running laptop, obtain approval for reviewed code, a verified private
-  SQLite backup, a non-consuming queue check, one bot/API restart and live acceptance.
-  Publishing a GitHub branch is **not** deploying it.
-- Maintain a short blocker/status log: owner, branch/PR, tested result, outstanding risk,
-  demo readiness, and responsible teammate. Do not silently drop an unfinished milestone.
-
-
-## Start here: evidence, defects and blockers
-
-| Area | Actual state, not aspirational |
-|---|---|
-| Telegram / Mini App | Original operator's laptop runs the bot/API/ngrok. `/start`, names, bounded conversation context and Mini App demo quizzes/settings/results have some real user evidence; source clone has no live state. |
-| Orchestrate | LIVE `AI Study Agent - POC` agent 1.0.0 uses Groq GPT-OSS 120B. Python IAM exchange, LIVE metadata, streaming transport and parsed replies have been verified. The old watsonx.ai Runtime 300,000-token monthly quota was exhausted; Orchestrate is the chosen active provider. |
-| Calendar | Python implementations exist for per-user free/busy, proposals, pending changes, exact consent, event creation/move/cancel and idempotency. The Orchestrate bridge is built but live conversational scheduling is not fully verified. |
-| **Calendar bug to fix** | After 282 passed offline regressions on repair `2414915`, real chat still failed: request for machine-learning sessions over two weeks → frequency question → “2-3 for each week should be enough” → repeated question → “2 a week should be enough” → **invalid tool request**. Account A previously went silent; Account B hit the bounded tool-call limit. Preserve safety guards while fixing this. |
-| Google OAuth | Original operator's Google Cloud project is External/**In production** as of 15 October. No full Google verification. Unverified warning/applicable new-user cap accepted. **Unlisted-user full OAuth consent/callback untested.** |
-| **Public Telegram gate** | Public Telegram username, `/start`, Mini App entry ≠ public LLM conversation. Current configured access to conversations/Calendar session controls still limits to two testers. A third account is required for acceptance. |
-| Brightspace | Read-only MCP allowlist/extraction/source store, versioned evidence and owner binding available; **not** independent per-user school SSO, deployed student-specific LMS reasoning or guaranteed exam coverage. Do not use the original operator's personal school data. |
-| Quizzes | Static demonstration MCQs, grading, stored attempts and results exist; evidence-grounded generation/weakness analytics not yet implemented end to end. |
-| Monitoring | No general proactive course-change watcher, personal replanning loop or time-saved measurement implementation. Consent/outbox cleanup or bot heartbeat alone does not meet this milestone. |
-| Navigation/hosting | New public-site Telegram links are present in the GitHub snapshot but were **not deployed** by the original handover. One API, one ngrok tunnel and one Telegram bot are required on a maintained host. |
-
-The latest sanitized publication checkpoint was reported pushed on GitHub `main` at `afb882d`; verify the branch/revision before making edits. The source-only handover is based on live code `5c28756` plus static navigation changes. Do not confuse a newer GitHub documentation commit with a running deployment. See `SECURITY_AUDIT.md` for the original content/history audit and publication-focused test results. The 282-test Calendar figure describes an earlier mocked test run, **not** complete external acceptance or a fresh suite on every clone.
-
-## Original product vision — full end-to-end workflow
-
-The primary goal is an **autonomous AI exam preparation agent**, not a generic question-answer bot:
-
-1. **Onboard:** Student starts Telegram bot; personal profile, preferences, strengths/weaknesses and study constraints belong to the authenticated Telegram actor.
-2. **Connect:** Student optionally authorizes **their own** Google Calendar and Brightspace school account. No shared developer login or credential fallback.
-3. **Discover:** Strictly read-only Brightspace MCP lists allowed courses/materials, announcements, exams and deadlines. Source revisions, dates, citations and uncertainty are stored per actor.
-4. **Prioritize:** Orchestrate reasons over authorized academic evidence, deadlines, known weaknesses, availability and user instructions; distinguishes recommendations from facts.
-5. **Plan:** Python gathers the student's actual Calendar free/busy and saved soft preferences, calculates valid exact local sessions and returns a proposed revision timetable.
-6. **Negotiate naturally:** Student can say “two per week,” “not Tuesday,” or “move just Friday to 3 PM.” Orchestrate should retain the original request, ask only genuinely missing questions and produce validated **internal** action requests; the student never types JSON.
-7. **Approve:** Python presents the *complete exact proposal*. Amendments invalidate stale approvals. Consequential event creations/changes happen only after a specific explicit human approval.
-8. **Execute:** Python writes only authorized events to the correct student's **primary** Google Calendar, guarding conflicts, ownership, state changes, duplicate actions and retries. Rescheduling/canceling use separate approvals.
-9. **Practice:** The Mini App presents exam-relevant, source-grounded generated quizzes with appropriate difficulty, answer key, explanations and supporting evidence.
-10. **Remember learning:** Scores, missed questions and weak-topic summaries persist separately by student, influencing next practice/revision recommendations.
-11. **Watch for changes:** With opt-in and reasonable cadence, the backend checks permitted course data for *meaningful* changes such as new exams or deadline amendments. It must not acknowledge, submit, mark-read or alter Brightspace content.
-12. **Recover:** Agent compares before/after sources, explains the changed plan, obtains approval before touching already scheduled Google events, and sends a useful Telegram notification.
-13. **Prove benefit:** A demo tracks manual effort compared with the actual agent workflow, showing steps/time saved and the changed-deadline recovery case. Never invent numbers or claim a simulated operation is real.
-
-This is the desired final behavior. The known gaps above remain. The AI IGNITION PS2 solution must show a meaningful completed task, two or more integrated tools, recovery from a change and authorization at the right moment. Demonstrate the strongest **verified** complete workflow rather than breadth with untested claims.
-
-## Architecture, responsibility and specific code-entry guide
-
-**Auth chain:** Telegram verified sender / signed Mini App `initData` → actor-bound Python services/SQLite → provider factory → Orchestrate LIVE reply → strict validated JSON action request → actor-scoped Python Calendar tool → review/proposal → human confirmation → approved Python executor. Brightspace information must enter the same actor-scoped authorization and evidence boundary. The external LLM can *reason and request*, never select an arbitrary student identity, approve itself or execute unrestricted tools.
-
-| Responsibility | Where to begin |
-|---|---|
-| API / Mini App | `backend/api.py`, `backend/routes/`, `frontend/`. Public static pages and protected student endpoints must stay separate. No forged Telegram `initData` bypass. |
-| Telegram bot | `backend/bot.py`, `conversation_telegram.py`, `calendar_telegram.py`. Exactly one poller per token. Preserve delivery retries, approval messages and service health. |
-| Memory and persistence | `backend/database.py`, `backend/models/`, `conversations.py`, profile/quiz/planning services. New persistence needs actor ownership, schema review and additive migration. |
-| IBM reasoning | `llm_providers.py`, `orchestrate_client.py`, `orchestrate.py`, `orchestrate_actions.py`; `docs/orchestrate-provider.md`. LIVE IAM/streaming parser, allowlisted action contracts and one bounded repair. |
-| Calendar | `calendar_agent.py`, `calendar_tool_inputs.py`, `pending_proposals.py`, `planning.py`, `scheduling_core.py`, `calendar_conversation.py`, `calendar_actions.py`, `calendar_management.py`, `calendar_text_decisions.py`, `calendar_change_decisions.py`, `calendar_telegram.py`. Reuse existing approvals/outbox and validation; don't rebuild a second executor. |
-| Google auth | `google_oauth.py`, `token_cipher.py`, private JSON example and OAuth callback. PKCE/state, token encryption, connection generations, scopes and consent. |
-| LMS | `brightspace.py`, `lms_mcp.py`, `lms_retrieval.py`, `source_store.py`, `document_extraction.py`. Read-only tool allowlist, owner bindings, revisions, evidence and extraction. |
-| Testing / operations | `tests/`, `scripts/run.py`, `scripts/init_database.py`, `scripts/audit_publication.py`, `scripts/check_orchestrate.py`, `config/*.example.json`, `.env.example`, `SECURITY_AUDIT.md`, `AGENTS.md`, `docs/`. |
-
-Relative module labels may be under `backend/services/`; look at the actual file before changing import paths. Consult specialized documents under `docs/` before rewriting an existing interface. Avoid an unnecessary Docker migration, new database, whole-backend Orchestrate rebuild or frontend-framework conversion with eight days to submission.
-
-### Security / approval invariants — do not compromise
-
-- **Identity:** Only Telegram's verified sender or signed Mini App `initData` determines the actor. Neither LLM JSON, Google email, URL params nor model prose may provide authority. Every relevant DB query/action must be actor-scoped. Legacy owner-only `/schedule` is not a permission model for all students.
-- **Orchestrate:** Remote agent tool/memory/hooks/knowledge capabilities are deliberately disabled; fresh remote threads replay bounded *authorized* local context. Envelopes use a strict local allowlist; unknown operations/fields and identity claims fail closed. Malformed output gets at most one bounded format repair. The LLM cannot request human approvals or Calendar execution directly.
-- **Review/consent:** Exact proposals include titles, aware timestamps, owners, digest/review version, expiration and account connection generation. Modification ≠ authorization. Expired/rejected/older controls must never execute; approvals must be durable and idempotent. One action shouldn't silently switch Google accounts.
-- **Google:** Free/busy + approved `calendar.events.owned` on that student's own primary Calendar; Python rechecks authorization, conflicts, ETags and idempotency. Consent alone creates no event. Only Python-confirmed results justify “created/changed/cancelled” claims.
-- **Brightspace:** Strictly read-only. Deny unknown/submit/write/mark-read/acknowledge operations, untrusted output paths and prompts embedded in retrieved documents. The user's own legitimate session is required. The original personal school SSO must never be shared or transferred.
-- **Storage/privacy:** OAuth tokens use Windows DPAPI tied to the Windows account and Telegram actor. This does not encrypt every SQLite field and is not portable to another host. Never publish tokens, data, course documents or history. Deletion is currently operator-managed; do not claim automatic deletion or provider-side erasure.
-- **Reliability:** Bound model/tool loops, Telegram delivery, retries and monitoring; uncertain external actions require reconciliation, not blind replay. Maintain separate approval and network side-effect logs without spilling secrets.
-
-## Priority P0 — safe public onboarding and Calendar repair
-
-### 1. Public Telegram/Orchestrate/Calendar audience
-
-Current restrictions were intentionally limited to two testers. Relevant starting points are `calendar_testing.configured_testers()` / ignored `config/calendar_test.json`, `conversations.load_settings()` (`audience: calendar_testers`), `conversation_telegram.handle_text`, preference/clear-history handlers, and `calendar_telegram.session_list`/session callbacks. `OWNER_ID` must remain reserved for legacy admin-only functions. A third student should be able to use normal conversations **without** assuming owner rights.
-
-**Implementation:** Design explicit default-off public-audience policy, adapt each entry point consistently, maintain signed-identity checks, personal SQLite context, provider quotas/per-user pacing, capacity bounds, exact reviews, and cross-user data denials. Do not just delete a tester-ID comparison and grant administrative shortcuts.
-
-**Acceptance:** Unknown Telegram account can `/start`, access signed Mini App, converse with IBM Orchestrate, connect its own Google account and request/review/manage only its own sessions. Both existing testers keep their data. Invalid actor tokens, forged IDs, another student's resource IDs, stale approvals and excess traffic fail safely. Verify with a third unlisted Google account and accept the documented unverified-app warning where permitted. Google OAuth *In production* does not accomplish this audience change by itself.
-
-### 2. Scheduling failure: follow-up clarification
-
-Reproduction from live October 15 Telegram test:
+### Ready-to-copy instruction for an AI programming partner
 
 ```text
-Student: Can you help me set up study sessions for the next 2 weeks?
-         For studying machine learning.
-Agent:   How many study sessions per week would you like over those two weeks?
-Student: 2-3 for each week should be enough.
-Agent:   [Repeated the same question]
-Student: 2 a week should be enough.
-Agent:   The model returned an invalid tool request. No action was approved; please try again.
+Read AGENTS.md, README.md and HANDOVER.md. Inspect Git status and the actual current
+source before editing. This is a hackathon PoC, deadline 23 October 2026. Preserve
+existing changes and authorization boundaries. Do not deploy or access production
+records without specific approval. Use synthetic external services/temp databases.
+
+Current blocker: an owner Brightspace spontaneous quiz saves a practice job but the
+background worker marks it generation_failed and publishes no set. The historical
+underlying exception was discarded. Nonowner uploaded-PDF generation was live-tested
+successfully. Do not restart the completed auth/tool-cap/blank-padding investigations.
+Do not replace IBM, add keyword routing, revive the excluded coordinator, or loosen
+grounding/authorization. No fixed total tool-call cap is wanted; retain time and
+repeated-no-progress bounds.
+
+First summarize the code boundary and propose safe constant-stage/error-category
+diagnostics for practice.run_one. Make the smallest testable change in isolation.
+Test relevant regressions using owned synthetic material. Request explicit approval
+before deployment and before any new production-record inspection. Report exact
+implemented/tested/live-tested/unverified behavior. If blocked, explain the missing
+evidence and leave a small actionable handover; do not burn usage on speculation.
+After resolving or explicitly accepting the owner blocker, continue Telegram cleanup,
+Mini App mobile polish, and owner/nonowner acceptance. Separately assess missing
+scheduled delivery and Calendar conflict heartbeat against the documented demo goal.
 ```
 
-The preceding deployment also showed Account A going silent and Account B exhausting the safe tool-call limit; `2414915` improved timeouts and initial frequency prompts, but the quoted follow-up error was **still present**. Do not assume this is caused by “weak prompting” before inspecting the actual rejected JSON action, schema, pending clarification state and Orchestrate tool feedback. Preserve LLM natural-language understanding, let Python calculate exact dates/validate Calendar results, and reuse existing proposal/approval tools. **Do not simply increase the tool-call budget or execute model prose.**
+Do not paste private files into the AI partner. It can use its host's normal loader
+for authorized integration tests without printing credentials. A fresh clone may
+not contain the original host's local commit graph/worktrees/artifacts; use published
+file paths, synthetic fixtures and the evidence ledger here instead of relying on
+unavailable local history.
 
-**Minimal fix process:** targeted sanitized logs → exact reproduction under synthetic two-user context/mocked Calendar → identify validation or memory mismatch → smallest schema/intent/instruction repair → focused offline regression → one bounded synthetic Orchestrate test if needed → supervised real Telegram acceptance with the operator's consent.
+## Publication and documentation checkpoint
 
-**Acceptance:** “two sessions a week for two weeks” produces **four** proposed sessions subject to personal availability, without a repeated question. “2-3 a week” should be interpreted reasonably or clarified briefly once. An individual pending-session amendment preserves other sessions; explicit approvals create correct events in each student's own Google Calendar, then an individually approved move and cancellation work. Test temporary overrides, duplicate/expired approvals, no-write rejection, provider failure and cross-user denial. Real writes require deliberate user approval; never automate them during debugging.
+The previous local documentation/setup checkpoint is `bdb679a`; the deployed runtime
+remains `f76c2d6`. This expanded handover is a later documentation-only revision.
+The attempted GitHub update did **not** advance remote `main`: automatic approval
+review required exact destination/payload approval. Some unpublished tree/blob
+objects may have been uploaded; they are not a branch release. Do not claim a teammate
+can clone this new checkpoint until a successful branch update is verified.
 
-### 3. External Google OAuth judge test
+The intended destination is the existing private `kiakky/ai-study-agent` repository.
+After reviewing the expanded documents and abbi hosting guidance, the developer
+authorized updating the existing private repository with the current project source.
+Replace obsolete source/docs through an ordinary reviewed
+commit while preserving repository history and any unrelated teammate work. Do not
+force-push or upload the literal private runtime environment. After these edits,
+rebuild the publication manifest: the previous payload/tree is stale.
 
-Publishing status on the original Google project is **External / In production**, but no full OAuth consent/callback test from a new unlisted Google account has been observed. Use a third Telegram identity and Google account not on the old test list. Enter Mini App → Settings → Connections → Connect Google Calendar, go through the unverified warning if accepted, validate callback to the correct stable HTTPS origin and verify the new user's account is connected **only to them**. No actual event creation is needed to test OAuth. An unverified warning, potential new-user cap and institutional Google account restrictions remain limitations; any failures must be documented honestly.
+The intended publication is a current tracked-source snapshot on top of the existing
+GitHub history, not an upload of every local experimental branch. Obsolete files
+from the earlier sanitized snapshot can be removed from the new tree; their previous
+versions remain in history. The current project includes its own dependency list,
+fresh-database helper and relevant regression tests. Use the actual published main
+commit as the teammate baseline, rather than expecting the local development commit
+IDs in this document to be ancestors of that sanitized source snapshot.
 
+Tracked source/tests/docs and safe setup templates are transferable. `.env`, OAuth
+clients/tokens, real SQLite, school session files, caches, backups, `.venv`, `.worktrees`
+and diagnostic artifacts stay local. Dependency installation and legitimate account
+onboarding recreate the independent environment. Keep the repository private unless
+the owner separately approves changing visibility and publication checks are complete.
 
-## Priority P1 — read-only Brightspace with student-owned sessions
+### Documentation and publication validation
 
-Read `lms_mcp.py` and `lms_retrieval.py` first. The existing infrastructure uses a positive tool allowlist, `readOnlyHint: true`, an isolated subprocess environment that strips unrelated secrets (including `WXO_*`), disabled downloads until verified, and source revisions/evidence extraction. The pinned external package is `brightspace-mcp-server@3.13.18`, with update checks disabled. Existing `SourceStore` requires a verified owner and explicit `developer_session` binding, **not a production-ready per-student account/session connection**. Supported extraction foundations include text, HTML/Markdown, text PDFs, DOCX and PPTX; scans/diagrams/complex tables are not guaranteed.
+This expanded README/HANDOVER should be checked for valid local file/section links,
+balanced code fences, parseable JSON examples and configuration names matching the
+current strict loaders. There is no need to rerun live IBM or the full application
+suite for prose-only changes. Source, credentials and production data remain untouched.
+The earlier fresh-clone setup check verified practice table provisioning and refusal
+of an existing database using temporary synthetic storage; it did not migrate live data.
 
-1. Investigate the existing MCP wrapper rather than rebuilding it. Inspect available read-only tools for course listing, resources, exams, announcements, retrieval and revision comparison. Record which capabilities the actual authenticated institution account exposes.
-2. Authenticate the teammate's **own** school account through legitimate browser SSO/MFA in an isolated local session (or use the school's supported sanctioned integration). Never transplant the original operator's Microsoft SSO browser profile or cookies. Ask no student for login credentials through Telegram.
-3. Before permitting public student retrieval, implement Telegram-actor → verified Brightspace account/session binding, isolated browser transport and owned retrieval/cache paths. Handle expired sessions, logout and reauthorization. Do not share a global developer MCP child process/session across students.
-4. Maintain a strictly **read-only** tool allowlist. No assignments, submissions, acknowledges/mark-read, grades writes, impersonation or arbitrary file-system destinations. Treat retrieved materials as untrusted data, not assistant instructions.
-5. Persist source identity, course name, document revision/hash, retrieval timestamp, relevant text segments and citations where authorized. Distinguish confirmed exam dates from incomplete or ambiguous notices. If retrieval is inaccessible because of institutional restrictions, use explicitly labeled synthetic school fixtures or authorized student-provided documents; no invented exams.
+Before a later publication, recheck Git status, rebuild/audit the current tracked
+file payload, compare the destination branch for teammate changes, and update by a
+normal commit with the expected previous head. Do not reuse the earlier partially
+uploaded stale tree. Verify the remote branch/commit after publication and give
+teammates that exact URL. If automatic approval review rejects an upload, report
+its reason and obtain the specified approval; do not change transports to bypass it.
 
-**Definition of done:** Two distinct own-account students retrieve only their own courses and documents; cross-account reference/session paths are denied; expired login requires reauthorization; no LMS write tool can execute. Demonstrate one evidence-backed exam date/announcement (or clearly labeled synthetic fallback), preserving provenance and uncertainty. Do not call owner-only MCP experiments public student integration.
+## Safeguards and final acceptance
 
-## Priority P1 — source-grounded quizzes and learning memory
+- Preserve all worktrees and existing edits. Never reset production DB or expose secrets.
+- Production record inspection requires **specific approval**. Metadata-only permission
+  is not permission to read source text, answer keys or transcripts. Backup/migration
+  permissions are separate. Prefer temporary DBs and synthetic integrations.
+- No automated real Calendar writes, Brightspace writes or Telegram test notifications
+  without explicit approval. Deployment approval is separate from data inspection.
+- Calendar operations always need exact user approval; preserve idempotency and recovery.
+- A GitHub source update is not a bot release. No new deployment occurred in this final
+  investigation. The original live application remains at `f76c2d6`.
+- Publish tracked application/tests/docs only. Exclude `.env`, credentials, sessions,
+  SQLite, backups, `.private-lms`, `.venv`, `.worktrees` and diagnostic artifacts.
+  Preserve the existing private GitHub repository and teammate history; never force-push.
 
-The Mini App currently has quiz attempts/results and saved grades. Avoid replacing its UI or recreating the attempts subsystem.
-
-1. Use authorized Brightspace/extraction evidence (or clearly labeled synthetic course fixtures) as the source for GPT-OSS quiz generation. Generate bounded, typed questions, answer choices, correct answers and explanations that cite or link back to document segments/revisions.
-2. Apply validation: no blank/duplicate answers, valid correct-answer indexes, appropriate difficulty/format, source grounding, and uncertainty/refusal when content is insufficient. An LLM-generated answer may be plausible and wrong; review at least a representative answer-key sample against cited source material.
-3. Save course/topic/source revision, quiz parameters, student responses, grades and missed-concept summaries under the correct verified Telegram actor. Reuse current Mini App quiz, resume, grade history and retake behavior.
-4. Derive compact per-student weakness information from missed topics and completed quizzes. Provide future revisions and quiz recommendations using this evidence. User-supplied one-off preferences are soft task overrides; do not silently overwrite permanent settings.
-5. Verify persistence after backend restart, different users' grade isolation, deliberate retakes, correct scoring and a focused follow-up quiz on a previously missed concept.
-
-**Definition of done:** A small evidence-backed generated quiz is served on the Telegram Mini App, the student completes it, grades and explanations persist, weak topics are recorded appropriately, and a later suggestion reflects missed material. A preloaded generic demo quiz alone is insufficient; clearly mark any synthetic source as synthetic.
-
-## Priority P1 — autonomous monitoring, change recovery and notifications
-
-This milestone is central to the hackathon PS2 “One Less Thing” requirement. Existing bot heartbeat, approvals and outbox maintenance are **not** a general academic watcher.
-
-1. Obtain user opt-in for relevant LMS checks, monitored courses and notification preferences. Create a bounded, durable periodic job or an explicitly supervised demo trigger that survives/reconciles restarts without duplicate work.
-2. Compare previously authorized source revisions to new Brightspace announcements/exam data or well-labeled synthetic changes. Ignore cosmetic changes; detect meaningful new exams/deadline changes with source-based before/after evidence.
-3. Connect a verified change to the current study goal and Calendar plan. Let Orchestrate reason about an updated recommendation; Python validates exact new sessions, availability, identity and temporal constraints.
-4. Send one useful Telegram change notification with provenance. Proposed Calendar modifications require a **new explicit review** of the exact selected sessions. Rejected modifications leave existing events untouched.
-5. Bound polling frequency, provider usage, error retries, quiet hours and notifications. Do not silently mark announcements read, alter LMS records or bypass a student's revoked session.
-
-**Definition of done:** A changed exam/deadline is detected once → one explanation/notification → revised plan presented → rejection makes no Calendar write → fresh specific approval changes only authorized events. A retry/restart does not duplicate notifications/events. Demonstrate provider/SSO failure safely; synthetic academic changes must be conspicuously labeled.
-
-## Final integration, presentation, video and submission
-
-**Start deck and video planning now, in parallel with code.** The deadline is 23 October 2026; official formats, file limits and exact submission details must be checked directly with the organizers. The previously discussed judging period may extend after the deadline; assign a live-host operator for any required access rather than assuming judges will clone and run the repository.
-
-Recommended final demonstration (use source-backed or clearly marked synthetic exam fixtures):
-
-1. A fresh Telegram user opens the bot, creates a profile and selects preferences.
-2. They connect **their own** Google Calendar; show the consent flow with the unverified warning limitation if applicable. For Brightspace, show only their own authorized courses or a declared fixture.
-3. Agent discovers a real/fixture exam or deadline, cites its source and proposes sessions aligned to student availability.
-4. Student changes exactly one session conversationally and approves the specific updated proposal. Verify a real event appears in the correct Calendar, without duplicate creation.
-5. Student completes a grounded quiz in the Mini App; saved grades and a weak-topic recommendation are shown.
-6. A previously authorized announcement or exam deadline changes; the agent finds the difference, explains it, sends a bounded notification and requests explicit approval to replan. Reject once to demonstrate the Calendar remains unchanged, then demonstrate approved recovery if safe.
-7. Present **measured time saved**. Define the manual baseline (e.g., discover an exam, compare Calendar, select sessions, enter Calendar events, adjust after changed deadline) and measure both workflows; show step counts/seconds and limitations. Do not fabricate savings or equate an LLM's narration with tool execution.
-
-**Judging readiness:** Public bot/hosting uptime, Google OAuth, Brightspace data isolation, operator contact, source availability, functional video, presentation deck, architecture/dataflow diagrams, hackathon PS2 mapping, signed-account demos, code access and privacy contact. Verify all provided links as an unknown external user. If a subsystem remains unsupported, mention it accurately and use the demo video as a fallback; do not claim the judges can independently perform a blocked step.
-
-### Team work and integration rules
-
-- Assign named owners for Calendar/public access, Brightspace, grounded quizzes, and monitoring/demo. Assign one operational owner for the live Telegram/ngrok/Google/IBM stack, with a backup contact. These are **suggested roles**, not proof someone agreed.
-- Use independent feature branches, reviewed pull requests and bounded interfaces. Agree on source-evidence schema and actor identity before parallel edits. Avoid direct modifications to common bot routing without coordination.
-- Run mocked tests first, including denials for forged cross-user resource IDs, duplicate/expired approvals, and prohibited Brightspace writes. Run limited supervised live tests only with deliberate user consent. Do not spray real exam/Calendar data into logs or providers.
-- Update README's capability table when a feature passes. Distinguish *implemented*, *mocked-tested*, *live-tested*, *blocked* and *planned*. Preserve known failure records for work not finished.
-- Run `scripts/audit_publication.py --history` and review the full diff/history before publishing changes. Do not accidentally commit local `.env`, token files, student DB, browser profiles or school course content.
-- A GitHub push is a code update, **not** a release to the operator's laptop. A live deployment must be planned and approved with fresh verified SQLite backup, non-consuming Telegram queue check, exactly one polling process, stable ngrok and proper post-deploy real-user health checks. Never discard unknown pending consequential updates automatically.
-
-### Handover status record (team should maintain)
-
-| Workstream | Responsible teammate | Branch/PR | Verified result | Open blocker | Next check |
-|---|---|---|---|---|---|
-| Judge/public access and Calendar | **Assign** | — | Existing foundation, two-tester gate | Open scheduling clarification / public enablement | Third-account acceptance |
-| Read-only Brightspace | **Assign** | — | Owner-bound read-only foundation | Independent account isolation and evidence grounding | Own-school read-only proof |
-| Generated quizzes/learning | **Assign** | — | Demo quiz/grade UI and storage | Source-grounded generation/weakness memory | Generated quiz and persisted result |
-| Monitoring/replanning | **Assign** | — | Approval/notification plumbing foundations | Actual changed-evidence watcher | Change → alert → new reviewed proposal |
-| Demo/video/slides/submission | **Assign** | — | Initial plan | Confirm organizer deliverables and measured evidence | Recorded verified demo |
-| Public host and credentials | **Assign** | — | Original laptop currently hosting | Handover/cutover, uptime, service ownership | External-network health + fresh Google OAuth |
-
-## Operations and incident response
-
-The original live deployment is a Windows laptop running one FastAPI API on loopback, one ngrok tunnel and one Telegram polling process. T3 Code/VS Code are not runtime dependencies. The original website, bot's Mini App and Google OAuth callback are unavailable when that host or its tunnel is offline. Data remains on that host unless a separately authorized data migration exists. **Copying the Windows SQLite DB to a teammate does not transfer DPAPI-encrypted Google grants.** Do not transfer the original user's Brightspace login/session or course content.
-
-For a new teammate clone, follow README setup and `scripts/run.py` commands with a **new bot, new database and own service accounts**. For the existing public bot, follow the detailed live-host cutover instructions above; coordinate first because the bot token/public identity, ngrok reserved hostname and Google redirect must be operated consistently. Two processes polling one Telegram token produce conflicts and/or missed replies. If the current host is to be retired, stage the replacement without a second poller, back up data securely, check pending updates non-destructively, stop the original poller, start the new single poller, update configured website/callback/menu if needed, and validate real accounts from a separate device. Only then allow the original host to stop.
-
-**Avoid these unsafe “fixes”:** resetting or copying production SQLite, disabling signed Telegram identity checks to let judges in, sharing Google/IBM/bot/SSO tokens over chat or Git, raising infinite action loops, activating Brightspace writes, switching OAuth clients without matching redirect and user reauthorization, restoring backups blindly, or running two bot pollers. Follow the exact approval and reconciliation state before retrying Calendar writes with uncertain outcomes.
-
-If a failure occurs, inspect sanitized operation names/counts and exceptions rather than printing OAuth tokens, full personal transcripts, document contents or the provider's private prompt. A private HTTP 401 in an ordinary browser is expected; only valid Telegram-signed calls should succeed. A 401 from IBM or Google is a separate provider-auth issue. Verify current time/system clock when investigating provider token expiry. No provider request should be silently treated as a successful Calendar write.
-
-## Handover limits and next verification
-
-The sanitized GitHub repository intentionally excludes the original personal database, Google/IBM/Telegram/ngrok secrets, Microsoft SSO sessions, course downloads, encrypted tokens, private backups and user conversations. It is an **independent code checkpoint**. The documentation explains how developers obtain their own external-service access; it cannot supply access they have not been granted by the relevant owner/institution.
-
-Outstanding items at handover: **safe public conversation/Calendar audience**, unresolved **“2 a week”** Orchestrate action failure, third-party Google OAuth consent acceptance, independent Brightspace student SSO integration, evidence-grounded AI quiz generation, weaknesses/adaptation, meaningful academic monitoring/replanning, measured time savings, operator ownership and final deck/video/submission checks. The static homepage/privacy Telegram navigation improvements were included in the GitHub snapshot but not deployed to the original host when this documentation was first prepared.
-
-No additional Calendar fix, Brightspace public enablement, live Google OAuth acceptance, automatic monitoring, public bot transfer or service restart is performed by editing these documents. The team must implement and demonstrate each item, update the status and obtain the original deployment operator's approval for changes to the live public service. See `SECURITY_AUDIT.md` for publication checks and the source code/tests for precise contracts. Keep the repository private until the team decides otherwise and confirms secrets/history are clean.
+Minimum honest rehearsal: nonowner PDF quiz with resume/submit/review; owner Brightspace
+quiz if fixed; two-account separation; evidence-backed assessment planning with exact
+Calendar review; scheduled delivery and introduced-conflict adaptation if implemented.
+Explicitly label missing features and synthetic demonstrations. Use recorded successful
+flows as a fallback and report measured time saved only when actually measured.

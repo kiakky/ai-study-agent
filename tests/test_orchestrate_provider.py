@@ -219,9 +219,12 @@ class OrchestrateAdapterTests(unittest.TestCase):
             self.assertIsNotNone(queue.service.agent_factory)
 
     def test_brightspace_drops_wxo_and_other_provider_secrets(self):
-        with tempfile.TemporaryDirectory(dir=ROOT/'tests',prefix='quiz-test-') as folder, patch.dict('os.environ', {'D2L_BASE_URL':'https://school.example.edu','D2L_SESSION_DIR':folder,'WXO_API_KEY': 'synthetic', 'wxo_other': 'synthetic', 'WXO_API_URL': 'synthetic', 'WXO_AGENT_ID': 'synthetic', 'IBM_CLOUD_API_KEY': 'synthetic', 'SAFE_VARIABLE': 'safe'}, clear=True):
+        import test_lms_upstream as upstream_fixtures
+        with upstream_fixtures.fake_package() as package, patch.dict('os.environ', {'WXO_API_KEY': 'synthetic', 'wxo_other': 'synthetic', 'WXO_API_URL': 'synthetic', 'WXO_AGENT_ID': 'synthetic', 'IBM_CLOUD_API_KEY': 'synthetic', 'SAFE_VARIABLE': 'safe',
+            'LMS_MCP_PACKAGE_ROOT':str(package),'LMS_SESSION_DIR':str(ROOT/'synthetic-session'),
+            'LMS_NODE_EXECUTABLE':str(ROOT/'node.exe'),'LMS_TENANT_ORIGIN':'https://school.example','LMS_EXPECTED_ACCOUNT':'synthetic-owner'}, clear=True):
             env = server_parameters().env
-        self.assertEqual(env['SAFE_VARIABLE'], 'safe')
+        self.assertNotIn('SAFE_VARIABLE',env)
         self.assertFalse(any(k.upper().startswith(('WXO_', 'IBM_')) for k in env))
 
     def test_authenticated_telegram_handler_delivers_context_and_blocks_impostor(self):

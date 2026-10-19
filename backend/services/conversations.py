@@ -37,13 +37,13 @@ def load_settings(path=None):
     try:
         if path.exists():values=json.loads(path.read_text(encoding='utf-8-sig'))
         if (not isinstance(values,dict) or set(values)-{'enabled','audience','model_id','provider'} or
-            type(values.get('enabled',False)) is not bool or values.get('audience','calendar_testers')!='calendar_testers'):
+            type(values.get('enabled',False)) is not bool or values.get('audience','calendar_testers') not in ('calendar_testers','onboarded_users')):
             raise ValueError()
         model=os.getenv('WATSONX_CONVERSATION_MODEL') or values.get('model_id','meta-llama/llama-3-3-70b-instruct')
         if not isinstance(model,str):raise ValueError()
         provider=values.get('provider','watsonx')
         if provider not in ('watsonx','orchestrate'):raise ValueError()
-        return ConversationSettings(values.get('enabled',False),'calendar_testers',model,provider)
+        return ConversationSettings(values.get('enabled',False),values.get('audience','calendar_testers'),model,provider)
     except (OSError,ValueError):raise LLMError('configuration') from None
 
 

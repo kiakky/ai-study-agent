@@ -1,4 +1,4 @@
-﻿"""Frozen, explicitly approved changes to one verifiably agent-created event.
+"""Frozen, explicitly approved changes to one verifiably agent-created event.
 
 Original creation intents are immutable. Completed changes form a per-session
 history; compare-and-swap Google ETags protect concurrent personal edits.

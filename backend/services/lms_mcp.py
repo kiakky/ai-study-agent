@@ -1,58 +1,12 @@
 """Schema-negotiated, read-only adapter. Unverified formats fail visibly."""
-import base64
 from contextlib import asynccontextmanager
-import json
-from urllib.parse import urlsplit
 
 from jsonschema import Draft202012Validator
-from services.brightspace import brightspace_connection, READ_TOOLS
-from services.document_extraction import MAX_FILE_BYTES
+from services.brightspace import brightspace_connection
 
-
-
-class MCPUnavailable(ValueError):
-    pass
-
-
-def attribute(value,*names,default=None):
-    for name in names:
-        if isinstance(value,dict) and name in value:return value[name]
-        if hasattr(value,name):return getattr(value,name)
-    return default
-
-
-def response_payload(result):
-    if attribute(result,'isError','is_error',default=False):raise MCPUnavailable('LMS retrieval failed; previous evidence retained.')
-    structured=attribute(result,'structuredContent','structured_content')
-    if structured is not None:return structured
-    blocks=attribute(result,'content',default=[])
-    text='\n'.join(attribute(block,'text',default='') for block in blocks if attribute(block,'type')=='text')
-    if text:
-        try:return json.loads(text)
-        except ValueError:return {'unparsed_text':text}
-    return {'unparsed_content':True}
-
-
-def document_bytes(result):
-    """Accept explicit inline text/base64 only, never arbitrary server local paths."""
-    if attribute(result,'isError','is_error',default=False):raise MCPUnavailable('Document retrieval failed.')
-    payload=response_payload(result)
-    if isinstance(payload,dict):
-        mime=payload.get('mimeType',payload.get('mime_type'))
-        if isinstance(payload.get('base64'),str):
-            encoded=payload['base64']
-            if len(encoded)>MAX_FILE_BYTES*4//3+8:raise MCPUnavailable('Document exceeds download limit.')
-            try:return base64.b64decode(encoded,validate=True),mime or 'application/octet-stream'
-            except ValueError:raise MCPUnavailable('Invalid document encoding.') from None
-        if isinstance(payload.get('html'),str):return payload['html'].encode(),'text/html'
-        if isinstance(payload.get('text'),str):return payload['text'].encode(),mime or 'text/plain'
-    for block in attribute(result,'content',default=[]):
-        resource=attribute(block,'resource')
-        blob=attribute(resource,'blob') if resource else None
-        if isinstance(blob,str):
-            if len(blob)>MAX_FILE_BYTES*4//3+8:raise MCPUnavailable('Document exceeds download limit.')
-            return base64.b64decode(blob,validate=True),attribute(resource,'mimeType','mime_type',default='application/octet-stream')
-    raise MCPUnavailable('MCP download format is unverified. Local paths/remote URLs are not automatically opened; source reference retained.')
+from services.lms_policy import READ_TOOLS, validate_arguments
+from services.lms_payloads import MCPUnavailable, attribute, response_payload, document_bytes, document_delivery
+from services.lms_payloads import MCPInlineLimit, check_document_error
 
 
 class MCPBrightspaceBackend:
@@ -74,18 +28,20 @@ class MCPBrightspaceBackend:
     async def request(self,name,course_id=None,query=None,resource=None,cursor=None):
         if name not in READ_TOOLS or name not in self.schemas:raise MCPUnavailable('Required read-only MCP tool is unavailable.')
         if name=='download_file' and not self.allow_document_downloads:
-            raise MCPUnavailable('Live download transport/output location requires separate verification and approval.')
+            raise MCPUnavailable('Inline course-material reading is disabled for this adapter.')
         schema=self.schemas[name];properties=schema.get('properties',{});arguments={}
         def bind(candidates,value):
             for candidate in candidates:
                 if candidate in properties:
                     expected=properties[candidate].get('type')
                     if expected=='integer':
+                        if type(value) is not int and not (isinstance(value,str) and value.isascii() and value.isdecimal()):
+                            raise MCPUnavailable('MCP identifier type is incompatible.')
                         try:value=int(value)
                         except (ValueError,TypeError):raise MCPUnavailable('MCP identifier type is incompatible.') from None
                     arguments[candidate]=value;return True
             return False
-        if course_id is not None and not bind(('courseId','course_id','orgUnitId','org_unit_id'),course_id) and name!='download_file':
+        if course_id is not None and not bind(('courseId','course_id','orgUnitId','org_unit_id'),course_id):
             raise MCPUnavailable('Course argument schema is unverified; no cross-course request made.')
         if query is not None and not bind(('query','searchTerm','search_term'),query):raise MCPUnavailable('Search schema is unverified.')
         if cursor is not None and not bind(('bookmark','pageToken','nextPageToken','cursor','page'),cursor):
@@ -97,20 +53,41 @@ class MCPBrightspaceBackend:
             maximum=properties['maxDepth'].get('maximum')
             if maximum is not None:arguments['maxDepth']=maximum
         if resource is not None:
+            # Only the indexed course/topic pair; never submission IDs, URLs or paths.
             raw=resource.get('raw_metadata',{})
-            bound=False
-            for aliases in [('fileId','file_id','FileId'),('documentId','document_id'),('contentId','content_id'),('topicId','topic_id')]:
-                identifier=next((raw[key] for key in aliases if key in raw),None)
-                if identifier is not None and bind(aliases,identifier):bound=True;break
-            if not bound:
-                url=resource.get('source_url')
-                if not isinstance(url,str):raise MCPUnavailable('Document retrieval identifier unavailable.')
-                parsed=urlsplit(url)
-                if parsed.scheme!='https' or parsed.hostname not in self.allowed_document_hosts or parsed.username or parsed.password:
-                    raise MCPUnavailable('Document URL host is not explicitly authorized for this connector.')
-                if not bind(('url','fileUrl','file_url'),url):raise MCPUnavailable('Download argument schema is unverified.')
+            identifier=raw.get('topicId',raw.get('topic_id'))
+            if identifier is None or not bind(('topicId',),identifier):
+                raise MCPUnavailable('Known course topic identifier is required for inline reading.')
+        validate_arguments(name,arguments)
         try:Draft202012Validator(schema).validate(arguments)
         except Exception:raise MCPUnavailable('MCP input schema needs a verified adapter; no guessed arguments sent.') from None
         result=await self.session.call_tool(name,arguments=arguments)
-        if attribute(result,'isError','is_error',default=False):raise MCPUnavailable('MCP retrieval failed; existing evidence retained.')
+        if name=='download_file':check_document_error(result)
+        elif attribute(result,'isError','is_error',default=False):raise MCPUnavailable('MCP retrieval failed; existing evidence retained.')
         return result
+
+    async def read_document(self, course_id, resource):
+        try:
+            return document_delivery(await self.request('download_file',course_id=course_id,resource=resource))
+        except MCPInlineLimit:
+            from pathlib import Path
+            from services.lms_temporary import private_scratch
+            raw=resource.get('raw_metadata',{})
+            topic=raw.get('topicId',raw.get('topic_id'))
+            # Same strict identifiers as request(); no URLs, identities or user paths.
+            if isinstance(course_id,str) and course_id.isascii() and course_id.isdecimal():course_id=int(course_id)
+            if isinstance(topic,str) and topic.isascii() and topic.isdecimal():topic=int(topic)
+            with private_scratch() as scratch:
+                result=await self.session.download_course_temporary(course_id,topic,scratch)
+                check_document_error(result)
+                metadata=response_payload(result)
+                if (metadata.get('mode')!='disk' or metadata.get('success') is not True
+                        or not isinstance(metadata.get('filePath'),str)
+                        or Path(metadata['filePath'])!=scratch.target):
+                    raise MCPUnavailable('Private document response is unverified.')
+                mime=metadata.get('mimeType')
+                value=scratch.read_bytes(mime)
+                if type(metadata.get('fileSize')) is not int or metadata['fileSize']!=len(value):
+                    raise MCPUnavailable('Private document size is unverified.')
+                return value,mime,{'temporary_download':True,'warnings':[
+                    'Original binary was read in a private temporary folder and removed; only extracted evidence is retained.']}

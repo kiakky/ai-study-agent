@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 import logging
 import re
-from services.calendar_tool_inputs import ConversationIntent, relative_range, normalize_arguments, ToolArgumentError, DraftFromSlots
+from services.calendar_tool_inputs import ConversationIntent, relative_range, normalize_arguments, ToolArgumentError, DraftFromSlots, frequency_followup, FREQUENCY_QUESTION
 from services.planning import PlanningError
 from services.google_oauth import OAuthUnavailable, ReconnectRequired
 
@@ -238,6 +238,10 @@ class CalendarAgent:
                        (self.user,self.message_id,ordinal,digest,'pending'))
         try:
             result=self.operation(call, ordinal)
+        except LLMError:
+            # Quiz source qualification may call the model. Preserve uncertainty
+            # and authentication failures instead of reporting a Calendar error.
+            raise
         except PlanningError as error:
             result={'error_code':'scheduling_constraint','error':str(error),'approved':False}
         except (OAuthUnavailable,ReconnectRequired):
@@ -401,16 +405,20 @@ class CalendarAgent:
         routing[0]['content']+='\nFor NEW planning only, if a necessary subject or date range cannot be resolved from the current request and conversation, put one specific question in clarification; otherwise leave clarification empty. Do not ask for details already supplied. A few sessions may be suggested as three; duration/timezone and unspecified time windows have saved defaults, so do not ask for them before reading the permitted tools. For Calendar reads, cancellation or rescheduling of existing sessions, the subject/date range is not required when an ordinal or other lookup filter is supplied: classify calendar and let get_study_sessions resolve the actor-owned references. Do not ask for an event ID, account ID or session details that can be retrieved.'
         routing[0]['content']+='\nSet calendar_task=session_change for moving/rescheduling/cancelling an existing session, sessions for listing created sessions, availability for checking free periods, connection for Google connection status, proposals for viewing saved proposals, unspecified otherwise. A session_change must look up get_study_sessions before proposing anything.'
         routing[0]['content']+='\nFor planning, extract session_count when the student gives a total, or sessions_per_week when they give a weekly frequency, using current conversation context for follow-ups. Never invent these fields. For next_two_weeks without a supplied frequency/total, leave both null; Python will ask the student. Existing duration/windows/timezone defaults are not a session frequency.'
-        routed=provider.complete(routing,tools=router.definitions(),tool_choice={'type':'function','function':{'name':'route_request'}},max_tokens=256)
-        if not self.fence():raise LLMError('cleared')
-        if not isinstance(routed,ChatReply):raise LLMError('invalid_intent_response')
-        if not routed.tool_calls:raise LLMError('invalid_intent_response')
-        if len(routed.tool_calls)!=1 or routed.tool_calls[0].name!='route_request':raise LLMError('invalid_intent_response')
-        try:intent=ConversationIntent.model_validate(routed.tool_calls[0].arguments)
-        except ValidationError:raise LLMError('invalid_intent_response') from None
+        intent=frequency_followup(messages)
+        if intent is not None and intent.clarification:
+            return ChatReply(intent.clarification)
+        if intent is None:
+            routed=provider.complete(routing,tools=router.definitions(),tool_choice={'type':'function','function':{'name':'route_request'}},max_tokens=256)
+            if not self.fence():raise LLMError('cleared')
+            if not isinstance(routed,ChatReply):raise LLMError('invalid_intent_response')
+            if not routed.tool_calls:raise LLMError('invalid_intent_response')
+            if len(routed.tool_calls)!=1 or routed.tool_calls[0].name!='route_request':raise LLMError('invalid_intent_response')
+            try:intent=ConversationIntent.model_validate(routed.tool_calls[0].arguments)
+            except ValidationError:raise LLMError('invalid_intent_response') from None
         if intent.intent=='planning' and intent.relative_range=='next_two_weeks':
             if intent.sessions_per_week is None and intent.session_count is None:
-                return ChatReply('How many study sessions per week would you like over those two weeks? I can use your saved duration and preferred times, then check your Calendar.')
+                return ChatReply(FREQUENCY_QUESTION)
             total=intent.session_count or intent.sessions_per_week*2
             self.planning_counts=([intent.sessions_per_week]*2 if intent.sessions_per_week else [(total+1)//2,total//2])
             if sum(self.planning_counts)!=total or max(self.planning_counts)>7:

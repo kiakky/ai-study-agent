@@ -7,7 +7,7 @@ from urllib.parse import urlsplit,parse_qs
 from pydantic import BaseModel,ConfigDict
 from models.sources import SourceMetadata,CourseQuery,SourceQuery,SearchQuery,EvidenceQuery
 from services.document_extraction import extract_document
-from services.lms_mcp import MCPBrightspaceBackend,MCPUnavailable,response_payload,document_bytes
+from services.lms_mcp import MCPBrightspaceBackend,MCPUnavailable,response_payload,document_delivery
 from services.source_store import SourceStore,LMSAccessDenied
 
 
@@ -67,7 +67,7 @@ def content_nodes(payload,parent=None):
             current=str(identifier)
             children=any(isinstance(payload.get(key),list) for key in ('modules','Modules','topics','Topics','children','resources'))
             yield payload,parent,'module' if children else 'document'
-        for key in ('content','Content','modules','Modules','topics','Topics','children','resources','items','data','pages'):
+        for key in ('contentTree','content','Content','modules','Modules','topics','Topics','children','resources','items','data','pages'):
             child=payload.get(key)
             if isinstance(child,(dict,list)):yield from content_nodes(child,current)
 
@@ -195,20 +195,35 @@ class BrightspaceRetrieval:
             return result
         latest=self.store.latest_payload(request.source_id)
         payload=json.loads(latest['original_payload_json']) if latest and latest['original_payload_json'] else {}
-        node=metadata['raw_metadata'];text=field(node,'html','body','text','Html','Body','Text')
-        if not isinstance(text,str):text=field(payload,'html','body','text','Html','Body','Text')
+        node=metadata['raw_metadata']
+        # File descriptions are summaries, not substitutes for the attached document.
+        file_material=metadata['kind']=='document' and (
+            (metadata['media_type'] and metadata['media_type'] not in {'text/html','text/plain'})
+            or str(field(node,'topicType','type','Type') or '').lower()=='file' or 'topicId' in node)
+        names=('html','body','text','Html','Body','Text')
+        if not file_material:names+=('content','description','Description')
+        text=field(node,*names)
+        if not isinstance(text,str):text=field(payload,*names)
+        delivery={}
         if isinstance(text,str):
-            value=text.encode();mime='text/html' if 'html' in node or 'html' in payload or metadata['media_type']=='text/html' else (metadata['media_type'] or 'text/plain')
+            value=text.encode();mime='text/html' if '<' in text or metadata['media_type']=='text/html' else 'text/plain'
         elif metadata['kind']!='document':
             value=json.dumps(payload,ensure_ascii=False,indent=2).encode();mime='application/json'
         else:
             async with self.backend.batch():
-                response=await self.backend.request('download_file',course_id=metadata['course_id'],resource=metadata)
-                value,mime=document_bytes(response)
+                reader=getattr(self.backend,'read_document',None)
+                if callable(reader):
+                    value,mime,delivery=await reader(metadata['course_id'],metadata)
+                else:
+                    response=await self.backend.request('download_file',course_id=metadata['course_id'],resource=metadata)
+                    value,mime,delivery=document_delivery(response)
         document=extract_document(value,mime)
-        if metadata['media_type'] and metadata['media_type']!=mime:
+        document.warnings.extend(delivery.get('warnings',[]))
+        if delivery.get('truncated') and document.status=='extracted':document.status='partial'
+        if metadata['media_type'] and metadata['media_type']!=mime and not delivery.get('upstream_text'):
             document.warnings.append('Retrieved MIME type differs from indexed metadata; verify the original source.')
-        revision=self.store.extracted(request.source_id,value,document)
+        revision=self.store.extracted(request.source_id,value,document,
+            retain_original=not (delivery.get('upstream_text',False) or delivery.get('temporary_download',False)))
         return {**self.store.evidence(request.source_id,revision['id']),'cache_used':False}
 
     async def search_learning_materials(self,request):

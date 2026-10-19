@@ -299,12 +299,16 @@ class RetrievalTests(unittest.IsolatedAsyncioTestCase):
 
 class MCPAdapterTests(unittest.IsolatedAsyncioTestCase):
     async def test_mcp_child_does_not_inherit_application_secrets(self):
-        with patch.dict('os.environ',{'TELEGRAM_BOT_TOKEN':'synthetic','GOOGLE_API_KEY':'synthetic','OPENAI_API_KEY':'synthetic','D2L_HEADLESS':'true','D2L_BASE_URL':'https://school.example.edu'}):
+        import test_lms_upstream as upstream_fixtures
+        with upstream_fixtures.fake_package() as package, patch.dict('os.environ',{'TELEGRAM_BOT_TOKEN':'synthetic','GOOGLE_API_KEY':'synthetic','OPENAI_API_KEY':'synthetic','D2L_HEADLESS':'true',
+            'LMS_MCP_PACKAGE_ROOT':str(package),'LMS_SESSION_DIR':str(ROOT/'synthetic-session'),
+            'LMS_NODE_EXECUTABLE':str(ROOT/'node.exe'),'LMS_TENANT_ORIGIN':'https://school.example','LMS_EXPECTED_ACCOUNT':'synthetic-owner'}):
             parameters=server_parameters()
         self.assertNotIn('TELEGRAM_BOT_TOKEN',parameters.env)
         self.assertNotIn('GOOGLE_API_KEY',parameters.env)
         self.assertNotIn('OPENAI_API_KEY',parameters.env)
         self.assertEqual(parameters.env['D2L_HEADLESS'],'false')
+        self.assertEqual(parameters.env['D2L_NO_UPDATE_CHECK'],'1')
     async def test_schema_mapping_read_whitelist_and_unknown_required_fields(self):
         backend=MCPBrightspaceBackend()
         backend.session=SimpleNamespace(call_tool=AsyncMock(return_value={'structuredContent':{'courses':[]}}))
@@ -329,8 +333,11 @@ class MCPAdapterTests(unittest.IsolatedAsyncioTestCase):
         backend.schemas={'download_file':{'type':'object','properties':{'fileId':{'type':'integer'}},'required':['fileId']}}
         with self.assertRaises(MCPUnavailable):await backend.request('download_file',course_id='123',resource={'resource_id':'456','raw_metadata':{'topicId':456}})
         self.assertFalse(backend.session.call_tool.called)
-        await backend.request('download_file',course_id='123',resource={'resource_id':'456','raw_metadata':{'fileId':789}})
-        self.assertEqual(backend.session.call_tool.call_args.kwargs['arguments'],{'fileId':789})
+        with self.assertRaises(MCPUnavailable):await backend.request('download_file',course_id='123',resource={'resource_id':'456','raw_metadata':{'fileId':789}})
+        self.assertFalse(backend.session.call_tool.called)
+        backend.schemas={'download_file':{'type':'object','properties':{'courseId':{'type':'integer'},'topicId':{'type':'integer'}},'required':['courseId','topicId']}}
+        await backend.request('download_file',course_id='123',resource={'raw_metadata':{'topicId':456}})
+        self.assertEqual(backend.session.call_tool.call_args.kwargs['arguments'],{'courseId':123,'topicId':456})
 
 
 class LMSMigrationTests(unittest.TestCase):

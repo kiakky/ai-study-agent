@@ -154,7 +154,7 @@ app.add_middleware(
 @app.get("/static/{asset}", include_in_schema=False)
 def frontend_asset(asset: str):
     # Never turn a project folder into a general-purpose public file server.
-    if asset not in {"styles.css", "app.js", "icon.svg", "setup.js", "setup.css", "study.js", "navigation.js"}:
+    if asset not in {"styles.css", "app.js", "icon.svg", "setup.js", "setup.css", "study.js", "navigation.js", "practice.js"}:
         raise HTTPException(404, "Not found")
     return FileResponse(ROOT / "frontend" / asset)
 
@@ -597,3 +597,11 @@ def get_attempt(attempt_id: int, user: dict = Depends(verified_telegram_user)):
 register_profile_routes(app, verified_telegram_user)
 register_planning_routes(app, verified_telegram_user)
 register_lms_routes(app, verified_telegram_user)
+
+
+from routes.practice import register_practice_routes
+register_practice_routes(app, verified_telegram_user)
+
+@app.get("/practice", include_in_schema=False)
+def practice_frontend():
+    return FileResponse(ROOT / "frontend" / "practice.html")

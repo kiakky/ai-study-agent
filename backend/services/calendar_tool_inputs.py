@@ -1,4 +1,5 @@
 """Lossless native-argument decoding and deterministic local calendar ranges."""
+import re
 from datetime import datetime, timedelta, time
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel, ConfigDict, Field
@@ -23,6 +24,42 @@ class ConversationIntent(BaseModel):
     clarification: str = Field(default='',max_length=500)
     session_count: int | None = Field(default=None,ge=1,le=100,strict=True)
     sessions_per_week: int | None = Field(default=None,ge=1,le=7,strict=True)
+
+
+FREQUENCY_QUESTION = ('How many study sessions per week would you like over those two weeks? '
+    'I can use your saved duration and preferred times, then check your Calendar.')
+FREQUENCY_CHOICE = 'Would you prefer {low} or {high} study sessions per week over those two weeks?'
+
+
+def frequency_followup(messages):
+    """Resolve only a direct answer to our own displayed frequency question.
+
+    History is actor-scoped by ConversationService. Full-message matching prevents
+    unrelated chat, new instructions or mixed approval text resuming an old plan.
+    This creates an inert planning intent, never an approval or Calendar write.
+    """
+    if len(messages) < 4 or messages[-1].get('role') != 'user' or messages[-2].get('role') != 'assistant':
+        return None
+    question = messages[-2].get('content', '')
+    choice = re.fullmatch(r'Would you prefer ([1-7]) or ([1-7]) study sessions per week over those two weeks\?', question)
+    if question != FREQUENCY_QUESTION and not choice:
+        return None
+    text = messages[-1].get('content', '').strip().lower().rstrip('.!')
+    match = re.fullmatch(
+        r'([1-7]|one|two|three|four|five|six|seven)(?:\s*[-–]\s*([1-7]))?'
+        r'(?:\s+(?:(?:study\s+)?sessions?\s+)?(?:a week|per week|each week|for each week))?'
+        r'(?:\s+(?:should be enough|is enough|should be fine|is fine|please))?', text)
+    if not match:
+        return None
+    words = dict(zip(('one','two','three','four','five','six','seven'), range(1,8)))
+    low = words.get(match[1]) or int(match[1])
+    high = int(match[2]) if match[2] else low
+    if high < low:
+        return None
+    if low != high:
+        return ConversationIntent(intent='planning', relative_range='next_two_weeks',
+            clarification=FREQUENCY_CHOICE.format(low=low, high=high))
+    return ConversationIntent(intent='planning', relative_range='next_two_weeks', sessions_per_week=low)
 
 
 class DraftFromSlots(BaseModel):
@@ -82,10 +119,12 @@ def normalize_arguments(arguments, schema):
             for key,item in value.items():
                 child=properties.get(key)
                 if child is None:result[key]=item;continue
-                # Pydantic default_factory arrays omit 'default' from JSON Schema.
-                # Null optional non-nullable arrays mean omitted, not a new constraint.
-                if (item is None or isinstance(item,str) and item.strip() in {'','null'}) and key not in concrete.get('required',[]) and child.get('type')=='array':
-                    item=[]
+                # Pydantic default_factory containers omit 'default' from JSON Schema.
+                # Null optional non-nullable containers mean omitted, not an override.
+                resolved_child=definitions.get(child.get('$ref','').split('/')[-1],child)
+                kind=resolved_child.get('type')
+                if (item is None or isinstance(item,str) and item.strip() in {'','null'}) and key not in concrete.get('required',[]) and kind in {'array','object'}:
+                    item=[] if kind=='array' else {}
                 result[key]=decode(item,child)
             return result
         if isinstance(value,list):return [decode(item,concrete.get('items',{})) for item in value]

@@ -18,7 +18,7 @@ from models.preferences import StudyPreferences
 from services.pending_proposals import PendingProposals
 from dotenv import load_dotenv
 
-REQUEST = "Can you address me as Alex from now on? Also I want to study more on game development, so could you help me schedule a few study sessions next week? I might be busy next Tuesday, so try to target Thursday and the weekends' afternoons."
+REQUEST = "Can you address me as kiakky from now on? Also I want to study more on game development, so could you help me schedule a few study sessions next week? I might be busy next Tuesday, so try to target Thursday and the weekends' afternoons."
 
 
 class TraceProvider:
@@ -71,7 +71,7 @@ def verify_scenarios(provider, fixture):
     assert not agent.references()
     agent,reply=run(202,507,'What name did I ask you to use?',
         [{'role':'user','content':REQUEST},{'role':'assistant','content':'Your proposed game development sessions are ready for review.'}])
-    assert 'alex' in reply.content.casefold() and not agent.references()
+    assert 'kiakky' in reply.content.casefold() and not agent.references()
     assert profiles.get_profile(202)['preferences']==before[202]
     assert not fixture.provider.inserts
     print('PASS: actual IBM context overrides, 45-minute evenings, Account A planning/amendment, lasting-change confirmation, greeting and preferred-name follow-up. No writes.')

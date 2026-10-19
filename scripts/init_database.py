@@ -14,7 +14,7 @@ def initialize_new():
         path.touch(exist_ok=False)
     except FileExistsError:
         raise RuntimeError("Database already exists. Stop: use a reviewed backed-up migration, never reset it.") from None
-    database.initialize_database(backfill_approvals=False, include_lms=True)
+    database.initialize_database(backfill_approvals=False, include_lms=True, include_practice=True)
     with closing(database.get_connection()) as db:
         if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok" or db.execute("PRAGMA foreign_key_check").fetchall():
             raise RuntimeError("New database integrity verification failed.")
