@@ -47,6 +47,32 @@ class ConversationTests(unittest.TestCase):
         self.assertIn('NO Calendar',request[0]['content'])
         self.assertNotIn('telegram_user_id',json.dumps(request))
 
+    def test_prompt_includes_only_the_owners_completed_practice_weaknesses(self):
+        database.initialize_database(backfill_approvals=False,include_practice=True)
+        self.service.generation(101)
+        self.service.generation(202)
+        result=json.dumps({'score':0,'feedback':[{'correct':False} for _ in range(5)]})
+        with closing(database.get_connection()) as db,db:
+            db.execute("""INSERT INTO practice_jobs
+                (id,user_id,request_key,request_json,evidence_json,status)
+                VALUES ('job-101',101,'key-101','{}','[]','ready')""")
+            db.execute("""INSERT INTO practice_sets
+                (id,user_id,job_id,title,topic,questions_json,evidence_json)
+                VALUES ('set-101',101,'job-101','Queue practice','Queue ordering','[]','[]')""")
+            db.execute("""INSERT INTO practice_attempts
+                (id,user_id,set_id,request_key,status,result_json,completed_at)
+                VALUES ('attempt-101',101,'set-101','attempt-key','completed',?,CURRENT_TIMESTAMP)""",(result,))
+
+        self.service.respond(101,1,'What should I work on next?')
+        student_a=json.dumps(self.provider.calls[-1])
+        self.assertIn('Queue ordering',student_a)
+        self.assertIn('0.0',student_a)
+
+        self.service.respond(202,1,'What should I work on next?')
+        student_b=json.dumps(self.provider.calls[-1])
+        self.assertNotIn('Queue ordering',student_b)
+        self.assertNotIn('Saved learning progress',student_b)
+
     def test_conversation_preference_not_silently_saved_to_profile(self):
         before=profiles.get_profile(101)['preferences']
         self.service.respond(101,1,'I prefer studying in the afternoon.')

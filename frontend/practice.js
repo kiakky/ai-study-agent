@@ -25,6 +25,12 @@ async function home(){
     el('p','Untimed practice from your own materials. Each attempt saves separately.'),
     el('p',`${data.stats.completed} completed / average ${data.stats.average===null?'--':data.stats.average+'%'} (latest ${data.history_limit} attempts)`),
     button('Create practice from materials',materials),button('Refresh',home));
+  const focus=data.learning?.weak_topics?.[0];
+  if(focus){const card=el('article','',{class:'review-card'});
+    card.append(el('span','NEXT REVIEW',{class:'eyebrow'}),el('h2',focus.title),
+      el('p',data.learning.recommendation),
+      button('Practice this topic from my materials',()=>materials(focus.title)));
+    root.append(card);}
   for(const job of data.jobs){const card=el('article','',{class:'review-card'});
     card.append(el('p',job.status==='failed'?'Preparation failed or was interrupted. No partial quiz was published; you can make a new request.':'Preparing your requested practice...'));
     root.append(card);}
@@ -37,14 +43,14 @@ async function home(){
   for(const a of data.attempts.filter(a=>a.status==='completed'))root.append(button(`Review ${data.sets.find(s=>s.id===a.set_id)?.title||'practice'} / ${a.score}%`,()=>open(a.id)));
   if(data.jobs.some(j=>['queued','running'].includes(j.status)))poll=setTimeout(()=>{if(!document.hidden&&!busy)run(home);},5000);
 }
-async function materials(){stopPoll();const rows=await api('/materials');root.replaceChildren(el('h1','Your learning materials'),button('Back to practice',home));
+async function materials(prefillTopic=''){stopPoll();const rows=await api('/materials');root.replaceChildren(el('h1','Your learning materials'),button('Back to practice',home));
   const title=el('input','',{placeholder:'Material title',maxlength:'160','aria-label':'Material title'});
   const notes=el('textarea','',{placeholder:'Paste your study notes here (30 to 30,000 characters)',maxlength:'30000',rows:'8','aria-label':'Study notes'});
   const upload=el('input','',{type:'file',accept:'application/pdf,.pdf','aria-label':'Upload a text-based PDF'});
   root.append(title,notes,button('Save pasted notes',async()=>{await api('/materials','POST',{request_id:uuid(),title:title.value,text:notes.value});await materials();}),upload,
     button('Read PDF (up to 5 MB)',async()=>{const file=upload.files[0];if(!file||file.size>5*1024*1024||!file.name.toLowerCase().endsWith('.pdf'))throw new Error('Choose a PDF up to 5 MB.');
       await api('/materials/pdf?request_id='+uuid()+'&title='+encodeURIComponent(file.name.slice(0,160)),'POST',file,{'Content-Type':'application/pdf'});await materials();}));
-  for(const m of rows){const card=el('article','',{class:'review-card'}),topic=el('input','',{placeholder:'Topic or section to practice','aria-label':'Practice topic'});
+  for(const m of rows){const card=el('article','',{class:'review-card'}),topic=el('input','',{placeholder:'Topic or section to practice','aria-label':'Practice topic'});topic.value=prefillTopic;
     const offset=el('select','',{'aria-label':'Material section'});
     const parts=Math.ceil(m.characters/6000);for(let part=0;part<parts;part++)offset.append(el('option',`Part ${part+1} of ${parts}`,{value:String(part*6000)}));
     const count=el('select','',{'aria-label':'Question count'});for(let i=1;i<=10;i++){const o=el('option',String(i),{value:String(i)});o.selected=i===5;count.append(o);}

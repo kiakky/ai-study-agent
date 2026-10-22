@@ -30,7 +30,7 @@ precedence over older milestone documents, which describe historical states.
 |---|---|---|
 | Telegram conversation | LLM-selected tools, onboarding and actor-bound conversation context; ordinary access supports `onboarded_users` | Each clone must enable that audience; full owner/nonowner acceptance still needed |
 | Brightspace | Owner-only read tools, course/material catalogs, cached source revisions, bounded document extraction | Successful real listing/reads and queued job; reliable owner quiz completion is blocked |
-| Generated Practice | Private sources/jobs, generated MCQs, independent saved attempts, submission, scores and explanations | Nonowner PDF flow live-tested; latest owner job failed before publication |
+| Generated Practice | Private sources/jobs, generated MCQs, independent saved attempts, submission, scores and explanations; completed attempts feed actor-scoped topic-accuracy review suggestions | Nonowner PDF flow live-tested; latest owner job failed before publication; difficulty does not adapt |
 | Calendar | Availability, proposals, conversational amendments and exact approvals; actor-bound create/move/cancel executors | Current complete exam-to-plan demo and conflict adaptation not established |
 | Scheduled practice | Spontaneous generation is independent of Calendar/plans | Automatic session-triggered quiz delivery is not established; shared generation must work first |
 | Autonomous adaptation | Existing approval cleanup and restart reconciliation | Periodic Calendar-overlap monitoring and proactive study-time notification are not established in current source |
@@ -90,7 +90,8 @@ all of these steps at once.
    complete private set. A queued job is not a completed quiz.
 8. The Mini App saves each untimed attempt separately. The student can resume an
    unfinished quiz, submit it, and review scores and explanations, including wrong
-   answers. Overall grades/progress are simple summaries; no adaptive difficulty.
+   answers. Completed attempts now provide a simple per-topic accuracy summary and
+   focused review suggestion; quiz difficulty itself does not adapt.
 9. A periodic heartbeat should reread Calendar availability for newly introduced
    conflicts with approved study sessions, notify the affected student once, and
    offer available alternatives. Moving events requires fresh exact approval.

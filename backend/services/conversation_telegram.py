@@ -133,7 +133,7 @@ async def clear_history(update,context):
         await reply(update,'Send /start to set up your study profile.');return
     # Clearing never consumes IBM credentials or makes an inference request.
     ConversationService(None).clear(user,update.message.message_id)
-    await reply(update,'Your conversational history is cleared. Saved preferences, grades and Calendar plans are unchanged.')
+    await reply(update,'Your conversational history is cleared. Saved preferences, practice attempts and topic progress, grades, and Calendar plans are unchanged.')
 
 
 async def present_tools(message,user,message_id):

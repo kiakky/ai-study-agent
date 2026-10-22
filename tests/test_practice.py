@@ -18,6 +18,7 @@ import database
 from models.practice import PracticeRequest,SaveAttempt,SubmitAttempt
 from services import practice
 from services.practice_store import PracticeStore,PracticeConflict,SCHEMA
+from services.practice_learning import conversation_context,learning_snapshot
 from services.llm_contracts import ChatReply,ToolCall,LLMError
 from services.practice_pdf import read_pdf,MAX_BYTES
 from services.practice_telegram import handle_pdf
@@ -190,6 +191,30 @@ class PracticeTests(unittest.TestCase):
         self.assertIn('first-in',result['feedback'][0]['correct_explanation'])
         self.assertEqual(result['feedback'][0]['citations'][0]['title'],'Synthetic data structures')
         self.assertEqual(self.store.listing()['stats']['average'],0)
+
+    def test_weak_topic_memory_is_actor_scoped_and_available_to_api_and_chat(self):
+        identifier,_=self.prepared(count=5)
+        attempt=self.store.start(identifier,str(uuid4()))
+        body=self.submit(attempt).model_copy(update={
+            'answers':{question['id']:'B' for question in attempt['questions']}
+        })
+        result=self.store.update(attempt['id'],body,True)
+        self.assertEqual(result['score'],0)
+
+        snapshot=learning_snapshot(101)
+        self.assertEqual(snapshot['weak_topics'][0]['title'],'Queue ordering')
+        self.assertEqual(snapshot['weak_topics'][0]['mastery_score'],0.0)
+        self.assertIn('Queue ordering',snapshot['recommendation'])
+        self.assertIn('Queue ordering',conversation_context(101))
+        self.assertIsNone(conversation_context(202))
+        self.assertEqual(learning_snapshot(202)['weak_topics'],[])
+
+        own=self.client.get('/api/practice',headers=self.headers)
+        other=self.client.get('/api/practice',headers=self.other)
+        self.assertEqual(own.status_code,200)
+        self.assertEqual(own.json()['learning']['weak_topics'][0]['title'],'Queue ordering')
+        self.assertEqual(other.status_code,200)
+        self.assertEqual(other.json()['learning']['weak_topics'],[])
 
     def test_limits_validation_and_unknown_source_do_not_enqueue(self):
         for args in [{'question_count':11},{'user_id':202},{'sources':[]},{'question_count':True}]:

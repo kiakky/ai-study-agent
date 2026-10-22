@@ -213,6 +213,11 @@ in Telegram; quizzes are untimed, with independent saved progress and wrong-answ
 **Excluded:** adaptive difficulty, announcement monitoring, complex combined requests
 and the experimental coordinator. Standalone requests suffice. IBM provider/model stays.
 
+Completed practice attempts now also provide an actor-scoped topic-accuracy summary, a
+review recommendation in Generated Practice, and a bounded summary for that same student's
+next bot conversation. This is a review-focus signal only: adaptive question difficulty is
+still excluded, and the summaries describe only completed practice attempts.
+
 Intended adaptation demonstration: manually introduce a Calendar event overlapping an
 approved study session; a periodic check finds it, notifies the student, proposes available
 alternatives and waits for exact approval before changing Calendar. Normal interval can

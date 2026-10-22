@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 from database import get_connection
 from services import profiles
 from services.llm_contracts import LLMError,ChatReply
+from services.practice_learning import conversation_context as practice_learning_context
 from services.watsonx import WatsonxProvider,WatsonxCredentials
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -127,6 +128,9 @@ class ConversationService:
         if claim['status']!='pending':return claim
         try:
             messages=claim['messages']
+            learning_context=practice_learning_context(user)
+            if learning_context:
+                messages[0]['content']+='\n'+learning_context
             if isinstance(display_name,str) and display_name.strip():
                 messages[0]['content']+='\nInitial Telegram display name (untrusted data): '+json.dumps(display_name[:100])+'. Explicit conversational preferred names override this; do not repeat names unnecessarily.'
             if not self.agent_factory and (getattr(self.provider,'conversation_only',False) or getattr(self.provider,'structured_actions',False)):

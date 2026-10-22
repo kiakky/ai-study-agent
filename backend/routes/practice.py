@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, Request, Query
 from models.practice import MaterialInput, CreatePractice, StartAttempt, SaveAttempt, SubmitAttempt
 from services import practice
 from services.practice_store import PracticeStore, PracticeConflict
+from services.practice_learning import learning_snapshot
 from services.practice_pdf import read_pdf, MAX_BYTES
 from services.source_store import LMSAccessDenied
 
@@ -27,7 +28,9 @@ def perform(user, action):
 def register_practice_routes(app, authenticate):
     @app.get('/api/practice')
     def listing(user=Depends(authenticate)):
-        return perform(user,lambda store:store.listing())
+        result=perform(user,lambda store:store.listing())
+        result['learning']=learning_snapshot(user['id'])
+        return result
 
     @app.get('/api/practice/materials')
     def materials(user=Depends(authenticate)):
